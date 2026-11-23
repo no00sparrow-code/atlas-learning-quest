@@ -9,9 +9,15 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AtlasProvider } from "@/lib/atlas-store";
+import { BottomNav } from "@/components/atlas/BottomNav";
+import { XpToasts } from "@/components/atlas/XpToasts";
+import { LevelUpOverlay } from "@/components/atlas/LevelUpOverlay";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -81,14 +87,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "theme-color", content: "#0b0d17" },
+      { title: "Atlas — Learn like you play" },
+      {
+        name: "description",
+        content:
+          "Atlas turns bite-sized learning into a game: discover, level up, unlock new worlds.",
+      },
+      { property: "og:title", content: "Atlas — Learn like you play" },
+      {
+        property: "og:description",
+        content:
+          "Atlas turns bite-sized learning into a game: discover, level up, unlock new worlds.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -96,6 +109,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700;800;900&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -106,7 +125,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -120,11 +139,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const inQuest = /^\/quests\/.+/.test(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AtlasProvider>
+        <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-x-hidden bg-page">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </div>
+        {!inQuest && <BottomNav />}
+        <XpToasts />
+        <LevelUpOverlay />
+        <Toaster position="top-center" theme="dark" />
+      </AtlasProvider>
     </QueryClientProvider>
   );
 }
