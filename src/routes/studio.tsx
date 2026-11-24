@@ -8,9 +8,11 @@ import {
   Cpu,
   Download,
   Film,
+  ListPlus,
   Loader2,
   Play,
   RefreshCw,
+  RotateCw,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -23,13 +25,24 @@ import {
   formatStamp,
   runStudioQc,
   scriptToJson,
-  slideSeconds,
   type StudioScript,
   type StudioSlide,
   type StudioSourceKind,
 } from "@/lib/studio/script";
 import { clearJobs, loadJobs, newJobId, upsertJob, type StudioJob } from "@/lib/studio/jobs";
+import {
+  clearCompleted,
+  enqueueScript,
+  loadQueue,
+  nextQueued,
+  queueCounts,
+  removeQueueItem,
+  retryQueueItem,
+  updateQueueItem,
+  type StudioQueueItem,
+} from "@/lib/studio/queue";
 import { renderStudioVideo, type RenderResult } from "@/lib/studio/render";
+import { runProductionPipeline, type PipelineStageStatus } from "@/lib/ai/pipeline";
 import { checkStudioQuota, consumeStudioRender } from "@/lib/ai/usage";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +114,26 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function pipelineTone(status: PipelineStageStatus): {
+  icon: typeof Check;
+  className: string;
+} {
+  switch (status) {
+    case "pass":
+      return { icon: Check, className: "text-success" };
+    case "warn":
+      return { icon: CircleAlert, className: "text-warning" };
+    case "fail":
+      return { icon: XCircle, className: "text-destructive" };
+    case "ready":
+      return { icon: Play, className: "text-primary" };
+    case "human-required":
+      return { icon: ShieldCheck, className: "text-gold" };
+    default:
+      return { icon: CircleAlert, className: "text-muted-foreground" };
+  }
+}
+
 function StudioPage() {
   const [sourceKeyValue, setSourceKeyValue] = useState("");
   const [script, setScript] = useState<StudioScript | null>(null);
@@ -127,7 +160,12 @@ function StudioPage() {
     remaining: 3,
     message: "3 local renders left today.",
   }));
+  const [queue, setQueue] = useState<StudioQueueItem[]>([]);
+  const [batchResults, setBatchResults] = useState<Record<string, RenderResult>>({});
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0, title: "" });
   const abortRef = useRef<AbortController | null>(null);
+  const batchAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const initial = STUDIO_SOURCES[0];
@@ -136,6 +174,7 @@ function StudioPage() {
       setScript(buildStudioScript(initial.id, initial.kind) ?? null);
     }
     setJobs(loadJobs());
+    setQueue(loadQueue());
     setConsent(typeof localStorage !== "undefined" && localStorage.getItem(CONSENT_KEY) === "true");
     setQuota(checkStudioQuota(0));
   }, []);
@@ -148,6 +187,7 @@ function StudioPage() {
     return () => {
       if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
       abortRef.current?.abort();
+      batchAbortRef.current?.abort();
     };
   }, []);
 
@@ -158,11 +198,19 @@ function StudioPage() {
     setVideoUrl(null);
   };
 
-  const duration = script ? slideSeconds(script.slides.length) : 0;
+  const duration = script ? script.slides.length * secondsPerSlide : 0;
   const qc = useMemo(
     () => (script ? runStudioQc(script, secondsPerSlide) : []),
     [script, secondsPerSlide],
   );
+  const pipeline = useMemo(
+    () =>
+      script
+        ? runProductionPipeline(script.sourceId, script.sourceKind, secondsPerSlide)
+        : undefined,
+    [script, secondsPerSlide],
+  );
+  const counts = queueCounts(queue);
   const signature = script ? JSON.stringify(script) : "";
   const stale = Boolean(result && renderedSignature !== signature);
   const canApprove =
@@ -399,9 +447,181 @@ function StudioPage() {
     );
   };
 
+  const queueDraft = () => {
+    if (!script) return;
+    const outcome = enqueueScript(script, secondsPerSlide);
+    if (!outcome.ok) {
+      toast.error(outcome.reason ?? "Could not queue that draft.");
+      return;
+    }
+    setQueue(outcome.queue);
+    toast.success("Draft added to the local production queue.");
+  };
+
+  const runQueue = async () => {
+    if (batchRunning || rendering) return;
+    if (!consent) {
+      toast.error("Enable local rendering before running the queue.");
+      return;
+    }
+    let items = loadQueue();
+    const total = items.filter((item) => item.status === "queued").length;
+    if (total === 0) {
+      toast.error("The queue has no drafts waiting.");
+      return;
+    }
+    const controller = new AbortController();
+    batchAbortRef.current = controller;
+    setBatchRunning(true);
+    setBatchProgress({ done: 0, total, title: "" });
+    let completed = 0;
+
+    try {
+      while (true) {
+        const next = nextQueued(items);
+        if (!next) break;
+        const check = checkStudioQuota(next.durationSeconds);
+        if (!check.allowed) {
+          setQuota(check);
+          toast.error(check.message);
+          break;
+        }
+        consumeStudioRender(next.durationSeconds);
+        setQuota(checkStudioQuota(next.durationSeconds));
+        items = updateQueueItem(next.id, {
+          status: "rendering",
+          attempts: next.attempts + 1,
+        });
+        setQueue(items);
+        setBatchProgress({ done: completed, total, title: next.title });
+
+        const queueJobId = newJobId();
+        const now = new Date().toISOString();
+        setJobs(
+          upsertJob({
+            id: queueJobId,
+            sourceId: next.sourceId,
+            sourceKind: next.sourceKind,
+            title: next.title,
+            status: "draft",
+            createdAt: now,
+            updatedAt: now,
+            durationSeconds: next.durationSeconds,
+            muted: true,
+          }),
+        );
+        items = updateQueueItem(next.id, { jobId: queueJobId });
+        setQueue(items);
+
+        try {
+          const output = await renderStudioVideo(next.script, {
+            secondsPerSlide: next.secondsPerSlide,
+            signal: controller.signal,
+          });
+          setBatchResults((current) => ({ ...current, [next.id]: output }));
+          items = updateQueueItem(next.id, { status: "done" });
+          setQueue(items);
+          const existing = loadJobs().find((job) => job.id === queueJobId);
+          if (existing) {
+            setJobs(
+              upsertJob({
+                ...existing,
+                status: "rendered",
+                updatedAt: new Date().toISOString(),
+                sizeBytes: output.sizeBytes,
+                durationSeconds: next.durationSeconds,
+              }),
+            );
+          }
+          completed += 1;
+        } catch (renderError) {
+          const message =
+            renderError instanceof DOMException && renderError.name === "AbortError"
+              ? "Render cancelled."
+              : renderError instanceof Error
+                ? renderError.message
+                : "The render failed.";
+          items = updateQueueItem(next.id, { status: "failed", error: message });
+          setQueue(items);
+          const existing = loadJobs().find((job) => job.id === queueJobId);
+          if (existing) {
+            setJobs(
+              upsertJob({
+                ...existing,
+                status: "failed",
+                updatedAt: new Date().toISOString(),
+                error: message,
+              }),
+            );
+          }
+          if (renderError instanceof DOMException && renderError.name === "AbortError") break;
+        }
+        setBatchProgress({ done: completed, total, title: "" });
+        items = loadQueue();
+      }
+    } finally {
+      setBatchRunning(false);
+      setBatchProgress((current) => ({ ...current, title: "" }));
+      batchAbortRef.current = null;
+      setQueue(loadQueue());
+      setQuota(checkStudioQuota(0));
+    }
+  };
+
+  const removeFromQueue = (id: string) => {
+    if (batchRunning) return;
+    setQueue(removeQueueItem(id));
+    setBatchResults((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const retryFromQueue = (id: string) => {
+    if (batchRunning) return;
+    setQueue(retryQueueItem(id));
+    toast.success("Draft queued for another attempt.");
+  };
+
+  const clearFinishedQueue = () => {
+    if (batchRunning) return;
+    const next = clearCompleted();
+    setQueue(next);
+    setBatchResults((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([id]) => next.some((item) => item.id === id)),
+      ),
+    );
+  };
+
+  const downloadQueued = (item: StudioQueueItem, kind: "video" | "vtt" | "script") => {
+    const output = batchResults[item.id];
+    if (kind === "script") {
+      download(
+        new Blob([scriptToJson(item.script)], { type: "application/json" }),
+        `${slug(item.title)}-script.json`,
+      );
+      return;
+    }
+    if (!output) {
+      toast.error("That file is no longer in this tab. Re-render the draft to download it.");
+      return;
+    }
+    if (kind === "vtt") {
+      download(
+        new Blob([output.vtt], { type: "text/vtt;charset=utf-8" }),
+        `${slug(item.title)}.vtt`,
+      );
+      return;
+    }
+    download(new Blob([output.blob], { type: output.mimeType }), `${slug(item.title)}.webm`);
+  };
+
   const shortOptions = STUDIO_SOURCES.filter((source) => source.kind === "short");
   const episodeOptions = STUDIO_SOURCES.filter((source) => source.kind === "episode");
-  const renderDisabled = !script || rendering || !consent || !quota.allowed;
+  const renderDisabled = !script || rendering || batchRunning || !consent || !quota.allowed;
+  const queueDisabled = !script || rendering || batchRunning;
 
   return (
     <div className="min-h-dvh bg-page pb-24">
@@ -674,6 +894,14 @@ function StudioPage() {
                     Cancel
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={queueDraft}
+                  disabled={queueDisabled}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border px-3 text-[11px] font-bold text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ListPlus className="size-4" /> Add to queue
+                </button>
                 {!consent && (
                   <span className="text-[10px] text-muted-foreground">Consent required.</span>
                 )}
@@ -748,6 +976,160 @@ function StudioPage() {
             </section>
 
             <section className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-sm font-bold">Production queue</h2>
+                  <p className="text-[10px] text-muted-foreground">
+                    {counts.queued} queued · {counts.done} done · {counts.failed} failed
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void runQueue()}
+                    disabled={batchRunning || rendering || !consent || counts.queued === 0}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary px-2.5 text-[10px] font-bold text-primary-foreground disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground"
+                  >
+                    {batchRunning ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Play className="size-3" />
+                    )}
+                    Run queue
+                  </button>
+                  {batchRunning && (
+                    <button
+                      type="button"
+                      onClick={() => batchAbortRef.current?.abort()}
+                      className="h-8 rounded-lg border border-border px-2.5 text-[10px] font-bold text-muted-foreground"
+                    >
+                      Stop
+                    </button>
+                  )}
+                  {counts.done > 0 && !batchRunning && (
+                    <button
+                      type="button"
+                      onClick={clearFinishedQueue}
+                      className="h-8 rounded-lg border border-border px-2.5 text-[10px] font-bold text-muted-foreground"
+                    >
+                      Clear done
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                Queue the current draft for sequential local rendering. Each item consumes the daily
+                render allowance and runs in this tab; there is no server queue or background work.
+              </p>
+
+              {batchRunning && (
+                <div className="mt-2 rounded-lg border border-primary/20 bg-primary/5 p-2">
+                  <p className="text-[10px] font-semibold text-primary">
+                    {batchProgress.title
+                      ? `Rendering “${batchProgress.title}”`
+                      : "Preparing queue…"}{" "}
+                    · {batchProgress.done}/{batchProgress.total} complete
+                  </p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width]"
+                      style={{
+                        width: `${batchProgress.total ? Math.round((batchProgress.done / batchProgress.total) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {queue.length === 0 ? (
+                <p className="mt-2 rounded-lg border border-dashed border-border p-2 text-[10px] text-muted-foreground">
+                  No drafts queued. Edit a script, then use <strong>Add to queue</strong>.
+                </p>
+              ) : (
+                <ul className="mt-2 divide-y divide-border/60">
+                  {queue.map((item) => (
+                    <li key={item.id} className="py-2 text-[11px]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                            item.status === "done"
+                              ? "bg-success/15 text-success"
+                              : item.status === "failed"
+                                ? "bg-destructive/15 text-destructive"
+                                : item.status === "rendering"
+                                  ? "bg-primary/15 text-primary"
+                                  : "bg-secondary text-muted-foreground",
+                          )}
+                        >
+                          {item.status}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-semibold">{item.title}</span>
+                        <span className="text-muted-foreground">
+                          {item.durationSeconds}s · attempt {item.attempts || 0}
+                        </span>
+                        {item.status === "failed" && !batchRunning && (
+                          <button
+                            type="button"
+                            onClick={() => retryFromQueue(item.id)}
+                            aria-label={`Retry ${item.title}`}
+                            className="rounded p-1 text-muted-foreground hover:text-primary"
+                          >
+                            <RotateCw className="size-3.5" />
+                          </button>
+                        )}
+                        {item.status !== "rendering" && !batchRunning && (
+                          <button
+                            type="button"
+                            onClick={() => removeFromQueue(item.id)}
+                            aria-label={`Remove ${item.title} from queue`}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      {item.error && (
+                        <p className="mt-1 text-[10px] text-destructive">{item.error}</p>
+                      )}
+                      {item.status === "done" && (
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => downloadQueued(item, "video")}
+                            className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-1 text-[9px] font-bold"
+                          >
+                            <Download className="size-2.5" /> WebM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadQueued(item, "vtt")}
+                            className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-1 text-[9px] font-bold"
+                          >
+                            <Download className="size-2.5" /> VTT
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadQueued(item, "script")}
+                            className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-1 text-[9px] font-bold"
+                          >
+                            <Download className="size-2.5" /> Script
+                          </button>
+                          {!batchResults[item.id] && (
+                            <span className="text-[9px] text-warning">
+                              file expired from this tab — re-render to download
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-4">
               <h2 className="font-display text-sm font-bold">Quality check</h2>
               <ul className="mt-2 space-y-1.5">
                 {qc.map((check) => (
@@ -771,6 +1153,36 @@ function StudioPage() {
                 not verify factual accuracy. Human review is required.
               </p>
             </section>
+
+            {pipeline && (
+              <details className="rounded-2xl border border-border bg-card p-4">
+                <summary className="cursor-pointer font-display text-sm font-bold">
+                  Production pipeline &amp; agent checks
+                  <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {pipeline.stages.length} stages
+                  </span>
+                </summary>
+                <ul className="mt-2 space-y-2">
+                  {pipeline.stages.map((stage) => {
+                    const tone = pipelineTone(stage.status);
+                    const Icon = tone.icon;
+                    return (
+                      <li key={stage.id} className="flex items-start gap-2 text-[10px]">
+                        <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone.className)} />
+                        <span>
+                          <strong className="font-bold text-foreground">{stage.label}</strong>{" "}
+                          <span className="text-muted-foreground">{stage.detail}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-2 border-t border-border/60 pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                  Research and narration are unavailable. Source and quality checks are structural,
+                  not factual certification. Approval remains human-only.
+                </p>
+              </details>
+            )}
 
             <section className="rounded-2xl border border-border bg-card p-4">
               <h2 className="font-display text-sm font-bold">5 · Human approval</h2>

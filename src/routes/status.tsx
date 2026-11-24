@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -10,7 +10,14 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+import { ATLAS_AGENTS } from "@/lib/ai/agents";
 import { runLocalHealthChecks, type HealthCheck, type HealthStatus } from "@/lib/ops/health";
+import {
+  clearHealthHistory,
+  loadHealthHistory,
+  recordHealthSnapshot,
+  type HealthSnapshot,
+} from "@/lib/ops/monitor";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/status")({
@@ -36,16 +43,22 @@ const STATUS_STYLE: Record<HealthStatus, { icon: typeof CheckCircle2; classes: s
 
 function StatusPage() {
   const [checks, setChecks] = useState<HealthCheck[] | null>(null);
+  const [history, setHistory] = useState<HealthSnapshot[]>([]);
   const [running, setRunning] = useState(false);
+  const started = useRef(false);
 
   const run = async () => {
     setRunning(true);
     const result = await runLocalHealthChecks();
     setChecks(result);
+    setHistory(recordHealthSnapshot(result));
     setRunning(false);
   };
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    setHistory(loadHealthHistory());
     void run();
   }, []);
 
@@ -166,6 +179,84 @@ function StatusPage() {
               Checked {new Date(checks[0].checkedAt).toLocaleString()} · results are local to this
               browser.
             </p>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <h2 className="font-display text-sm font-bold">Agent capabilities</h2>
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+            A capability list, not a claim of automation. “Not implemented” agents have no hidden
+            fallback; “model-gated” means the local Guide works but generative answers need a
+            configured model.
+          </p>
+          <ul className="mt-2 divide-y divide-border/60">
+            {ATLAS_AGENTS.map((agent) => (
+              <li key={agent.id} className="flex items-start gap-2 py-2 text-[10px]">
+                <span
+                  className={cn(
+                    "mt-0.5 size-2 shrink-0 rounded-full",
+                    agent.status === "available"
+                      ? "bg-success"
+                      : agent.status === "model-gated"
+                        ? "bg-warning"
+                        : "bg-muted-foreground/50",
+                  )}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-foreground">
+                    {agent.name}{" "}
+                    <span className="font-normal uppercase tracking-wider text-muted-foreground">
+                      {agent.status.replace("-", " ")} · {agent.mode}
+                    </span>
+                  </p>
+                  <p className="text-muted-foreground">{agent.note}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display text-sm font-bold">Check history</h2>
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setHistory(clearHealthHistory())}
+                className="text-[10px] font-semibold text-muted-foreground hover:text-destructive"
+              >
+                Clear history
+              </button>
+            )}
+          </div>
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+            Recorded on this device whenever you run a check while the app is open. This is not a
+            scheduled server monitor, and it does not observe other devices.
+          </p>
+          {history.length === 0 ? (
+            <p className="mt-2 text-[11px] text-muted-foreground">No local snapshots yet.</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-border/60">
+              {history.slice(0, 6).map((snapshot) => (
+                <li
+                  key={snapshot.id}
+                  className="flex flex-wrap items-center gap-2 py-2 text-[10px] text-muted-foreground"
+                >
+                  <span className="font-semibold text-foreground">
+                    {new Date(snapshot.at).toLocaleString()}
+                  </span>
+                  <span className="text-success">{snapshot.counts.pass} pass</span>
+                  <span className="text-warning">{snapshot.counts.warn} warn</span>
+                  <span className="text-destructive">{snapshot.counts.fail} fail</span>
+                  <span>{snapshot.counts.unavailable} unavailable</span>
+                  {snapshot.failed.length > 0 && (
+                    <span className="w-full truncate">
+                      Needs attention: {snapshot.failed.map((item) => item.label).join(", ")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 

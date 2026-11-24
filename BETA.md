@@ -26,13 +26,14 @@ by Lovable. Do not add or edit `supabase/migrations/` or `drizzle/` by hand.
    if you also configure verification and password reset.
 3. Set the auth **Site URL** to the published origin and add the published callback URL. Preview
    and production use different exact URLs.
-4. Create one beta table, which keeps the existing state shape intact:
-   - `learning_state`
-     - `user_id uuid primary key references auth.users(id) on delete cascade`
-     - `state jsonb not null`
-     - `updated_at timestamptz not null default now()`
-5. Enable Row Level Security and add `select`, `insert`, `update` policies using
-   `auth.uid() = user_id`. Never accept a user id supplied by the browser.
+4. Apply the reviewed reference schema in [`docs/backend/schema.sql`](docs/backend/schema.sql)
+   through Lovable Cloud. It includes `profiles`, `learning_state`, content, production jobs,
+   usage, plans, subscriptions, marketplace products, purchases, the revenue ledger, moderation,
+   admin audit, health checks and owner-only system controls. It is reference SQL, not an
+   automatically applied migration.
+5. Enable Row Level Security on every exposed table. Policies use `auth.uid()`; owner checks use
+   the server-side `public.is_owner()` function over `platform_admins`. Never accept a user id or
+   admin flag supplied by the browser.
 6. Add a sync adapter in the app:
    - On sign-in, load the row and replace local state only if remote `updated_at` is newer.
    - On change, debounce an upsert keyed by the authenticated `user.sub`/`auth.uid()`.
@@ -43,8 +44,14 @@ by Lovable. Do not add or edit `supabase/migrations/` or `drizzle/` by hand.
 Lovable injects the public Supabase URL and anon key. Those are publishable values; the service
 role key and `LOVABLE_API_KEY` must remain server-side.
 
-Until this is configured, Atlas creates **no account**, shows no sign-in screen and labels
-account features as unavailable. Do not add a client-only “admin” gate and call it security.
+`src/lib/backend/config.ts` only detects those public values. If they exist it reports
+“configuration detected, auth/sync not enabled” in `/status`; it never claims a connection. The
+full decision, free-tier limits, setup sequence and security boundary are in
+[`docs/backend/README.md`](docs/backend/README.md).
+
+Until sync is implemented and tested with two accounts, Atlas creates **no account**, shows no
+sign-in screen and labels account features as unavailable. Do not add a client-only “admin” gate
+and call it security.
 
 ## 3. AI architecture (implemented locally, model blocked)
 
@@ -84,11 +91,19 @@ not add a `LOVABLE_API_KEY` to browser code.
 
 ### Agent scope
 
-The provider layer is shared, but only the Guide has a model-backed path today. Research,
-source-verification, accuracy-check, narration, categorisation and recommendation “agents” are not
-implemented as independent model agents. Recommendations, categorisation, review scheduling and
-the library Guide are deterministic and local. The Studio script is template-generated, not
-AI-authored. The final report lists these explicitly.
+The provider layer is shared, but only the Guide has a model-backed path today.
+`src/lib/ai/agents.ts` is the honest capability catalog shown in `/status`:
+
+- **Available locally:** scripting, structural quality review, deterministic categorisation,
+  deterministic recommendations, subtitle generation and browser rendering.
+- **Model-gated:** the Guide (library fallback always works; generative answers need a configured
+  local model).
+- **Not implemented:** web research and narration. Their pipeline stages report `unavailable` and
+  block automatic approval.
+
+The Studio script is template-generated, not AI-authored. `src/lib/ai/pipeline.ts` runs structural
+stages (source URL checks, QC, captions, categorisation, render readiness) and always leaves the
+final factual/rights decision to a human. The final report lists these explicitly.
 
 ## 4. Atlas Studio (local video drafts)
 
@@ -108,8 +123,12 @@ Important limits, shown in the UI:
 - The animation is slide fades and lower-third captions; it is not generative imagery.
 - Video files are not uploaded or persisted after reload. Download the draft first.
 - Approval is local metadata only. **Publishing is not connected.**
-- Batch production, long-form (>90s) drafts and an automatic research/verify agent are not
-  implemented.
+- **Batch production is implemented locally.** Add drafts to the queue (maximum 12), run them
+  sequentially, watch progress, download completed WebM/VTT files, retry failures and remove items.
+  Exact duplicates are rejected by signature; a different slide duration is a new version.
+- **Long-form (>90s) drafts are not implemented.** The current lesson structure produces short
+  drafts; batch output is several shorts, not one long programme.
+- An automatic research/verify agent is not implemented. Narration is still silent.
 - Daily local limits prevent runaway CPU use. Nothing renders in the background or for another
   learner.
 
@@ -124,11 +143,13 @@ To publish a real episode after owner review:
 ## 5. Monitoring and status (local only)
 
 `/status` runs browser-local checks: storage, unique lesson IDs, source coverage, registered
-episode media, WebM support, local allowances, studio job failures and model availability.
+episode media, WebM support, local allowances, studio job failures, model availability and backend
+configuration. It records up to 20 timestamped snapshots in this browser's local storage so a
+repeated failure is visible. This is not a scheduled server monitor.
 
 It explicitly marks platform-wide data **unavailable**. There is no authoritative user count,
-CPU/RAM/storage metric, spend, revenue, queue length or security feed to show without a backend.
-Do not add estimated numbers to that page and call them monitoring.
+CPU/RAM/storage metric, spend, revenue, server queue length or security feed to show without a
+backend. Do not add estimated numbers to that page and call them monitoring.
 
 Required later, after Cloud/Auth exists:
 
@@ -160,14 +181,20 @@ Until then, Atlas exposes no administrative data or controls.
 - Paid tiers are marked **Planned** and their required backend, payment and compliance work is
   listed on the page.
 
+`src/lib/commerce/types.ts` defines plan, product, purchase and revenue-ledger records plus
+integer revenue splitting and guarded purchase transitions. Nothing in it charges a card or
+activates a plan. `docs/backend/schema.sql` prepares the matching tables, and
+`docs/backend/README.md` lists the exact provider, credential, webhook, tax and legal steps.
+
 Before enabling payments: add authenticated accounts, server-side entitlements, a payment
 provider, refunds, tax handling, age requirements and an owner-approved compliance review.
 
 ## 8. Marketplace (blocked)
 
-No marketplace, purchases, creator payouts or revenue tracking are implemented. Those depend on
-accounts, secure payments, moderation, legal review and a server data model. The current beta does
-not display fake products or prices.
+No marketplace UI, purchases, creator payouts or revenue tracking are active. Product/moderation
+data models and a publication gate are prepared in `src/lib/commerce/types.ts`; they require
+accounts, secure server-side payments, moderation and legal review before use. The current beta
+does not display fake products, prices or successful purchases.
 
 ## 9. Server-side cost protection (blocked)
 

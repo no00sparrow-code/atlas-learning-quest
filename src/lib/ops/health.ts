@@ -6,6 +6,7 @@ import { checkProvider } from "@/lib/ai/providers";
 import { loadAiConfig } from "@/lib/ai/config";
 import { LOCAL_LIMITS, loadUsage } from "@/lib/ai/usage";
 import { loadJobs } from "@/lib/studio/jobs";
+import { detectBackendReadiness } from "@/lib/backend/config";
 
 export type HealthStatus = "pass" | "warn" | "fail" | "unavailable";
 
@@ -171,6 +172,16 @@ export async function runLocalHealthChecks(): Promise<HealthCheck[]> {
       checkedAt,
     });
   }
+
+  const backend = detectBackendReadiness();
+  checks.push({
+    id: "backend-config",
+    label: "Backend configuration",
+    status: backend.configured ? "warn" : "unavailable",
+    detail: backend.note,
+    scope: "platform",
+    checkedAt,
+  });
 
   checks.push({
     id: "platform",
