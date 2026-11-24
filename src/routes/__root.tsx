@@ -179,11 +179,17 @@ function AtlasGate() {
 
 function AppFrame() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const immersive = /^\/(quests\/|series\/|watch\/|guide|review)/.test(pathname);
+  const immersive = /^\/(quests\/|series\/|watch\/|guide|review|studio)/.test(pathname);
 
   return (
     <>
-      <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-x-hidden bg-page md:max-w-2xl lg:max-w-4xl">
+      <div
+        className={`relative mx-auto min-h-dvh w-full overflow-x-hidden bg-page ${
+          pathname.startsWith("/studio")
+            ? "max-w-md md:max-w-3xl lg:max-w-6xl"
+            : "max-w-md md:max-w-2xl lg:max-w-4xl"
+        }`}
+      >
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </div>

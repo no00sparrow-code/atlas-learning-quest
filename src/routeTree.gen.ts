@@ -14,9 +14,12 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as PlansRouteImport } from './routes/plans'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as StatusRouteImport } from './routes/status'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as WorldRouteImport } from './routes/world'
 import { Route as QuestsIndexRouteImport } from './routes/quests.index'
 import { Route as QuestsQuestIdRouteImport } from './routes/quests.$questId'
@@ -48,6 +51,11 @@ const MapRoute = MapRouteImport.update({
   path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -61,6 +69,16 @@ const ReviewRoute = ReviewRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorldRoute = WorldRouteImport.update({
@@ -95,9 +113,12 @@ export interface FileRoutesByFullPath {
   '/guide': typeof GuideRoute
   '/library': typeof LibraryRoute
   '/map': typeof MapRoute
+  '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
   '/search': typeof SearchRoute
+  '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
   '/series/$seriesId': typeof SeriesSeriesIdRoute
@@ -110,9 +131,12 @@ export interface FileRoutesByTo {
   '/guide': typeof GuideRoute
   '/library': typeof LibraryRoute
   '/map': typeof MapRoute
+  '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
   '/search': typeof SearchRoute
+  '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
   '/series/$seriesId': typeof SeriesSeriesIdRoute
@@ -126,9 +150,12 @@ export interface FileRoutesById {
   '/guide': typeof GuideRoute
   '/library': typeof LibraryRoute
   '/map': typeof MapRoute
+  '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
   '/search': typeof SearchRoute
+  '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
   '/series/$seriesId': typeof SeriesSeriesIdRoute
@@ -143,9 +170,12 @@ export interface FileRouteTypes {
     | '/guide'
     | '/library'
     | '/map'
+    | '/plans'
     | '/profile'
     | '/review'
     | '/search'
+    | '/status'
+    | '/studio'
     | '/world'
     | '/quests/$questId'
     | '/series/$seriesId'
@@ -158,9 +188,12 @@ export interface FileRouteTypes {
     | '/guide'
     | '/library'
     | '/map'
+    | '/plans'
     | '/profile'
     | '/review'
     | '/search'
+    | '/status'
+    | '/studio'
     | '/world'
     | '/quests/$questId'
     | '/series/$seriesId'
@@ -173,9 +206,12 @@ export interface FileRouteTypes {
     | '/guide'
     | '/library'
     | '/map'
+    | '/plans'
     | '/profile'
     | '/review'
     | '/search'
+    | '/status'
+    | '/studio'
     | '/world'
     | '/quests/$questId'
     | '/series/$seriesId'
@@ -189,9 +225,12 @@ export interface RootRouteChildren {
   GuideRoute: typeof GuideRoute
   LibraryRoute: typeof LibraryRoute
   MapRoute: typeof MapRoute
+  PlansRoute: typeof PlansRoute
   ProfileRoute: typeof ProfileRoute
   ReviewRoute: typeof ReviewRoute
   SearchRoute: typeof SearchRoute
+  StatusRoute: typeof StatusRoute
+  StudioRoute: typeof StudioRoute
   WorldRoute: typeof WorldRoute
   QuestsQuestIdRoute: typeof QuestsQuestIdRoute
   SeriesSeriesIdRoute: typeof SeriesSeriesIdRoute
@@ -236,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -255,6 +301,20 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/world': {
@@ -301,9 +361,12 @@ const rootRouteChildren: RootRouteChildren = {
   GuideRoute: GuideRoute,
   LibraryRoute: LibraryRoute,
   MapRoute: MapRoute,
+  PlansRoute: PlansRoute,
   ProfileRoute: ProfileRoute,
   ReviewRoute: ReviewRoute,
   SearchRoute: SearchRoute,
+  StatusRoute: StatusRoute,
+  StudioRoute: StudioRoute,
   WorldRoute: WorldRoute,
   QuestsQuestIdRoute: QuestsQuestIdRoute,
   SeriesSeriesIdRoute: SeriesSeriesIdRoute,

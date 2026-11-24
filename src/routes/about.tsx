@@ -87,6 +87,12 @@ function AboutPage() {
               may receive standard request logs (IP address, user agent) when it serves the app.
             </p>
             <p>
+              Optional local models are off by default. If you enable one, Guide sends your question
+              and a small learning context only to the endpoint you choose — a browser on-device
+              model or a local server you run. Atlas has no model API key and does not proxy those
+              requests. Studio renders stay in this browser unless you download them.
+            </p>
+            <p>
               You can export a JSON backup from{" "}
               <Link
                 to="/profile"
@@ -108,6 +114,7 @@ function AboutPage() {
             <li>• Lessons completed, likes, saves and watch history</li>
             <li>• Quiz results and concept memory / review schedule</li>
             <li>• Interests, ambitions and optional display name</li>
+            <li>• Optional model preferences, local daily usage and studio job metadata</li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
             Stored under the browser key{" "}
@@ -140,8 +147,11 @@ function AboutPage() {
           <h2 className="text-lg font-bold">What is not ready</h2>
           <ul className="mt-2 space-y-1.5 text-sm text-foreground/80">
             <li>• Secure accounts, cloud sync and multi-device progress</li>
-            <li>• Produced narration / video for deep-dive episodes</li>
-            <li>• A live language-model assistant — the Guide is deterministic</li>
+            <li>
+              • Produced narration and deep-dive episode media; Studio makes silent visual drafts
+            </li>
+            <li>• A hosted AI assistant — an optional local model must be configured in Guide</li>
+            <li>• Owner admin, server monitoring, payments and marketplace purchases</li>
             <li>• Public deployment; this build is a local preview</li>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">

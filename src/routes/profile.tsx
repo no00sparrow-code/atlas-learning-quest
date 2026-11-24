@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   Check,
   Clapperboard,
+  CreditCard,
   Flame,
   Map,
   Plus,
@@ -417,6 +418,39 @@ function Profile() {
         <Section title="Account & data">
           <DataControls />
         </Section>
+
+        <Link
+          to="/studio"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+        >
+          <Clapperboard className="size-5 text-cat-science" />
+          <span className="flex-1 text-sm font-semibold">Atlas Studio — local video drafts</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            On-device
+          </span>
+        </Link>
+
+        <Link
+          to="/plans"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+        >
+          <CreditCard className="size-5 text-primary" />
+          <span className="flex-1 text-sm font-semibold">Plans & local allowances</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Free beta
+          </span>
+        </Link>
+
+        <Link
+          to="/status"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+        >
+          <ShieldCheck className="size-5 text-primary" />
+          <span className="flex-1 text-sm font-semibold">Local system status</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            On-device
+          </span>
+        </Link>
 
         <Link
           to="/about"
