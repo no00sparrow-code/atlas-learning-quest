@@ -10,19 +10,51 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuideRouteImport } from './routes/guide'
+import { Route as LibraryRouteImport } from './routes/library'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ReviewRouteImport } from './routes/review'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as WorldRouteImport } from './routes/world'
 import { Route as QuestsIndexRouteImport } from './routes/quests.index'
 import { Route as QuestsQuestIdRouteImport } from './routes/quests.$questId'
+import { Route as SeriesSeriesIdRouteImport } from './routes/series.$seriesId'
+import { Route as WatchCardIdRouteImport } from './routes/watch.$cardId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorldRoute = WorldRouteImport.update({
@@ -40,42 +72,117 @@ const QuestsQuestIdRoute = QuestsQuestIdRouteImport.update({
   path: '/quests/$questId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeriesSeriesIdRoute = SeriesSeriesIdRouteImport.update({
+  id: '/series/$seriesId',
+  path: '/series/$seriesId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchCardIdRoute = WatchCardIdRouteImport.update({
+  id: '/watch/$cardId',
+  path: '/watch/$cardId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/guide': typeof GuideRoute
+  '/library': typeof LibraryRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
+  '/review': typeof ReviewRoute
+  '/search': typeof SearchRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
+  '/series/$seriesId': typeof SeriesSeriesIdRoute
+  '/watch/$cardId': typeof WatchCardIdRoute
   '/quests/': typeof QuestsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/guide': typeof GuideRoute
+  '/library': typeof LibraryRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
+  '/review': typeof ReviewRoute
+  '/search': typeof SearchRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
+  '/series/$seriesId': typeof SeriesSeriesIdRoute
+  '/watch/$cardId': typeof WatchCardIdRoute
   '/quests': typeof QuestsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/guide': typeof GuideRoute
+  '/library': typeof LibraryRoute
+  '/map': typeof MapRoute
   '/profile': typeof ProfileRoute
+  '/review': typeof ReviewRoute
+  '/search': typeof SearchRoute
   '/world': typeof WorldRoute
   '/quests/$questId': typeof QuestsQuestIdRoute
+  '/series/$seriesId': typeof SeriesSeriesIdRoute
+  '/watch/$cardId': typeof WatchCardIdRoute
   '/quests/': typeof QuestsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/world' | '/quests/$questId' | '/quests/'
+  fullPaths:
+    | '/'
+    | '/guide'
+    | '/library'
+    | '/map'
+    | '/profile'
+    | '/review'
+    | '/search'
+    | '/world'
+    | '/quests/$questId'
+    | '/series/$seriesId'
+    | '/watch/$cardId'
+    | '/quests/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/world' | '/quests/$questId' | '/quests'
-  id: '__root__' | '/' | '/profile' | '/world' | '/quests/$questId' | '/quests/'
+  to:
+    | '/'
+    | '/guide'
+    | '/library'
+    | '/map'
+    | '/profile'
+    | '/review'
+    | '/search'
+    | '/world'
+    | '/quests/$questId'
+    | '/series/$seriesId'
+    | '/watch/$cardId'
+    | '/quests'
+  id:
+    | '__root__'
+    | '/'
+    | '/guide'
+    | '/library'
+    | '/map'
+    | '/profile'
+    | '/review'
+    | '/search'
+    | '/world'
+    | '/quests/$questId'
+    | '/series/$seriesId'
+    | '/watch/$cardId'
+    | '/quests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GuideRoute: typeof GuideRoute
+  LibraryRoute: typeof LibraryRoute
+  MapRoute: typeof MapRoute
   ProfileRoute: typeof ProfileRoute
+  ReviewRoute: typeof ReviewRoute
+  SearchRoute: typeof SearchRoute
   WorldRoute: typeof WorldRoute
   QuestsQuestIdRoute: typeof QuestsQuestIdRoute
+  SeriesSeriesIdRoute: typeof SeriesSeriesIdRoute
+  WatchCardIdRoute: typeof WatchCardIdRoute
   QuestsIndexRoute: typeof QuestsIndexRoute
 }
 
@@ -88,11 +195,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/world': {
@@ -116,14 +258,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestsQuestIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/series/$seriesId': {
+      id: '/series/$seriesId'
+      path: '/series/$seriesId'
+      fullPath: '/series/$seriesId'
+      preLoaderRoute: typeof SeriesSeriesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$cardId': {
+      id: '/watch/$cardId'
+      path: '/watch/$cardId'
+      fullPath: '/watch/$cardId'
+      preLoaderRoute: typeof WatchCardIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GuideRoute: GuideRoute,
+  LibraryRoute: LibraryRoute,
+  MapRoute: MapRoute,
   ProfileRoute: ProfileRoute,
+  ReviewRoute: ReviewRoute,
+  SearchRoute: SearchRoute,
   WorldRoute: WorldRoute,
   QuestsQuestIdRoute: QuestsQuestIdRoute,
+  SeriesSeriesIdRoute: SeriesSeriesIdRoute,
+  WatchCardIdRoute: WatchCardIdRoute,
   QuestsIndexRoute: QuestsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,4 +1,4 @@
-import { Flame, Gem } from "lucide-react";
+import { Flame, Gem, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAtlas } from "@/lib/atlas-store";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -53,6 +53,13 @@ export function Hud({
       >
         <Gem className="size-3.5" />
         {skillPoints}
+      </Link>
+      <Link
+        to="/search"
+        aria-label="Search Atlas"
+        className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <Search className="size-3.5" />
       </Link>
     </div>
   );

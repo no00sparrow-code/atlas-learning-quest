@@ -10,6 +10,7 @@ import {
   type QuizQuest,
 } from "@/data/quests";
 import { getCategory } from "@/data/categories";
+import { QUEST_FINAL_CONCEPTS, questQuestionConcept } from "@/data/concepts";
 import { useAtlas } from "@/lib/atlas-store";
 import { mysteryXp, quizXp } from "@/lib/progression";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -219,6 +220,7 @@ function QuizRunner({
   onProgress: (p: number) => void;
   onFinish: (o: Outcome) => void;
 }) {
+  const { recordQuizAttempt } = useAtlas();
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
   const total = quest.questions.length;
@@ -240,6 +242,8 @@ function QuizRunner({
         q={q}
         nextLabel={index + 1 < total ? "Next question" : "See results"}
         onNext={(ok) => {
+          const conceptId = questQuestionConcept(quest.id, index);
+          if (conceptId) recordQuizAttempt(conceptId, ok);
           const nextCorrect = correct + (ok ? 1 : 0);
           setCorrect(nextCorrect);
           if (index + 1 < total) setIndex(index + 1);
@@ -272,6 +276,7 @@ function MysteryRunner({
   onProgress: (p: number) => void;
   onFinish: (o: Outcome) => void;
 }) {
+  const { recordQuizAttempt } = useAtlas();
   const [revealed, setRevealed] = useState(1);
   const [accusing, setAccusing] = useState(false);
   const potential = mysteryXp(quest.reward, revealed, true);
@@ -293,7 +298,9 @@ function MysteryRunner({
         <Question
           q={quest.final}
           nextLabel="Close the case"
-          onNext={(ok) =>
+          onNext={(ok) => {
+            const conceptId = QUEST_FINAL_CONCEPTS[quest.id];
+            if (conceptId) recordQuizAttempt(conceptId, ok);
             onFinish({
               xp: mysteryXp(quest.reward, revealed, ok),
               score: ok ? `Solved · ${revealed} clue${revealed > 1 ? "s" : ""}` : "Unsolved",
@@ -302,8 +309,8 @@ function MysteryRunner({
                 ? `You cracked it with ${revealed} clue${revealed > 1 ? "s" : ""}. Fewer clues, bigger rewards.`
                 : "Wrong suspect, but you still learned the truth. Consolation XP awarded.",
               success: ok,
-            })
-          }
+            });
+          }}
         />
       </div>
     );

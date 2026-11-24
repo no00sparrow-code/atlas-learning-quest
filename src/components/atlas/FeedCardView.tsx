@@ -38,17 +38,20 @@ interface Props {
 }
 
 export function FeedCardView({ card, active, onOpenInsight }: Props) {
-  const { state, watchCard, toggleLike, toggleSave } = useAtlas();
+  const { state, watchCard, toggleLike, toggleSave, saveProgress } = useAtlas();
   const category = getCategory(card.category);
-  const watched = state.watched.includes(card.id);
+  const watched = state.shorts[card.id]?.completed ?? state.watched.includes(card.id);
   const liked = state.liked.includes(card.id);
   const saved = state.saved.includes(card.id);
 
-  const [progress, setProgress] = useState(0);
+  const stored = state.shorts[card.id];
+  const startAt = stored && !stored.completed ? Math.min(0.98, stored.position) : 0;
+  const [progress, setProgress] = useState(startAt);
   const [paused, setPaused] = useState(false);
   const [heartBurst, setHeartBurst] = useState(0);
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressRef = useRef(0);
+  const progressRef = useRef(startAt);
+  const lastSaved = useRef(0);
 
   useEffect(() => {
     if (!active) {
@@ -63,6 +66,10 @@ export function FeedCardView({ card, active, onOpenInsight }: Props) {
       last = now;
       progressRef.current = next;
       setProgress(next);
+      if (now - lastSaved.current > 1200) {
+        lastSaved.current = now;
+        saveProgress("short", card.id, next);
+      }
       if (next >= 1) {
         watchCard(card.id);
         return;
@@ -71,7 +78,7 @@ export function FeedCardView({ card, active, onOpenInsight }: Props) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [active, paused, card.id, watchCard]);
+  }, [active, paused, card.id, watchCard, saveProgress]);
 
   const done = progress >= 1;
 
@@ -89,12 +96,13 @@ export function FeedCardView({ card, active, onOpenInsight }: Props) {
         progressRef.current = 0;
         setProgress(0);
         setPaused(false);
+        saveProgress("short", card.id, 0);
       } else setPaused((p) => !p);
     }, 240);
   };
 
   const share = async () => {
-    const url = `${window.location.origin}/?card=${card.id}`;
+    const url = `${window.location.origin}/watch/${card.id}`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied", { description: card.title });

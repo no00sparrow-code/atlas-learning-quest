@@ -1,18 +1,21 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Compass, Orbit, Swords, UserRound } from "lucide-react";
+import { Bookmark, Compass, Orbit, Swords, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAtlas } from "@/lib/atlas-store";
+import { continueWatching } from "@/lib/library";
 
 const TABS = [
   { to: "/", label: "Discover", icon: Compass },
   { to: "/world", label: "World", icon: Orbit },
   { to: "/quests", label: "Quests", icon: Swords },
+  { to: "/library", label: "Library", icon: Bookmark },
   { to: "/profile", label: "Profile", icon: UserRound },
 ] as const;
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { skillPoints } = useAtlas();
+  const { state, skillPoints } = useAtlas();
+  const resumable = continueWatching(state, 9).length;
 
   return (
     <nav
@@ -24,6 +27,7 @@ export function BottomNav() {
         {TABS.map((tab) => {
           const active = tab.to === "/" ? pathname === "/" : pathname.startsWith(tab.to);
           const Icon = tab.icon;
+          const badge = tab.to === "/world" ? skillPoints : tab.to === "/library" ? resumable : 0;
           return (
             <Link
               key={tab.to}
@@ -42,9 +46,9 @@ export function BottomNav() {
                 <Icon
                   className={cn("size-5 transition-transform duration-300", active && "scale-110")}
                 />
-                {tab.to === "/world" && skillPoints > 0 && (
+                {badge > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                    {skillPoints}
+                    {badge}
                   </span>
                 )}
               </span>
