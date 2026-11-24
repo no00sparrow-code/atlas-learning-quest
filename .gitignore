@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Local beta screenshots and backup artifacts
+artifacts/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

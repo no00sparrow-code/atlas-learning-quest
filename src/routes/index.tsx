@@ -157,7 +157,7 @@ function Discover() {
           <EndOfFeed />
         </div>
       ) : (
-        <div className="space-y-4 px-4 pb-nav pt-44">
+        <div className="mx-auto w-full max-w-2xl space-y-4 px-4 pb-nav pt-44">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">
               Long form
@@ -171,7 +171,7 @@ function Discover() {
 
           {featured && <ContinueCard overview={featured} playerLevel={level.level} />}
 
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {deepDives.map((item, index) => (
               <DeepDiveCard
                 key={item.id}
@@ -322,7 +322,7 @@ function DeepDiveCard({
 
 function EndOfFeed() {
   return (
-    <section className="flex h-dvh snap-start flex-col items-center justify-center gap-4 px-8 text-center">
+    <section className="mx-auto flex h-dvh w-full max-w-md snap-start flex-col items-center justify-center gap-4 px-8 text-center">
       <div className="flex size-20 items-center justify-center rounded-3xl bg-gradient-xp shadow-glow">
         <Swords className="size-9 text-primary-foreground" />
       </div>

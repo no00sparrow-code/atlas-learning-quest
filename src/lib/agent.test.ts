@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { askAtlas, buildAgentContext, greeting, searchAtlas } from "./agent";
-import { createDefaultState } from "./atlas-store";
+import { createDemoState } from "./atlas-store";
 
-const context = buildAgentContext(createDefaultState());
+const context = buildAgentContext(createDemoState());
 
 describe("Atlas Guide agent", () => {
   it("greets the learner by name with their level and streak", () => {

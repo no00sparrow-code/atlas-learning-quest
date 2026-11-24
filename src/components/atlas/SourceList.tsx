@@ -16,7 +16,6 @@ export function SourceList({
   compact?: boolean;
 }) {
   const sources = sourcesFor(contentId);
-  const query = `I think there may be an error in "${title}". Can you check it?`;
 
   return (
     <div className={compact ? "rounded-xl bg-secondary/50 p-3" : "rounded-2xl bg-card p-4"}>
@@ -45,11 +44,12 @@ export function SourceList({
         </p>
       )}
       <Link
-        to="/guide"
-        search={{ q: query }}
+        to="/about"
+        hash="report"
+        title={`Report an issue with ${title}`}
         className="mt-2 inline-block text-[11px] font-bold text-primary underline-offset-2 hover:underline"
       >
-        Spotted something wrong? Ask the Guide
+        Spotted something wrong? Report it
       </Link>
     </div>
   );

@@ -20,6 +20,7 @@ import { seriesStats } from "@/lib/metrics";
 import { EpisodePlayer } from "@/components/atlas/EpisodePlayer";
 import { XpBar } from "@/components/atlas/XpBar";
 import { SourceList } from "@/components/atlas/SourceList";
+import { episodeVideoUrl } from "@/data/videos";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/series/$seriesId")({
             { name: "description", content: series.subtitle },
             { property: "og:title", content: `${series.title} — Atlas deep dive` },
             { property: "og:description", content: series.subtitle },
-            { property: "og:type", content: "video.other" },
+            { property: "og:type", content: "article" },
             { name: "twitter:card", content: "summary_large_image" },
           ]
         : [{ title: "Series unavailable — Atlas" }, { name: "robots", content: "noindex" }],
@@ -209,6 +210,7 @@ function SeriesPage() {
             episode={active}
             image={category.image}
             focus={series.focus}
+            videoUrl={episodeVideoUrl(active.id)}
             initialPosition={progress?.position ?? 0}
             completed={completed}
             onProgress={handleProgress}
@@ -219,7 +221,7 @@ function SeriesPage() {
 
       {!locked && (
         <div className="relative mt-4 px-4">
-          <div className="rounded-2xl bg-card p-4">
+          <div id="episode-notes" className="rounded-2xl bg-card p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-cat">

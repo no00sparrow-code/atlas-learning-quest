@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Award,
   Brain,
+  ShieldCheck,
   Check,
   Clapperboard,
   Flame,
@@ -101,8 +102,8 @@ function Profile() {
               {rankForLevel(level.level)}
             </span>
           </div>
-          <h1 className="mt-5 text-2xl font-black">{state.name}</h1>
-          <p className="text-sm text-muted-foreground">{state.handle}</p>
+          <h1 className="mt-5 text-2xl font-black">{state.name || "Learner"}</h1>
+          <p className="text-sm text-muted-foreground">{state.handle || "Local beta profile"}</p>
 
           <div className="mt-5 w-full rounded-2xl glass p-4 text-left">
             <div className="mb-2 flex items-baseline justify-between">
@@ -116,7 +117,7 @@ function Profile() {
         </div>
       </section>
 
-      <div className="space-y-6 px-4">
+      <div className="mx-auto w-full max-w-2xl space-y-6 px-4">
         <div className="grid grid-cols-4 gap-2">
           <MiniStat
             icon={Zap}
@@ -417,18 +418,36 @@ function Profile() {
           <DataControls />
         </Section>
 
+        <Link
+          to="/about"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+        >
+          <ShieldCheck className="size-5 text-primary" />
+          <span className="flex-1 text-sm font-semibold">About, privacy & content reports</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Beta
+          </span>
+        </Link>
+
         <button
           onClick={() => {
+            if (
+              !window.confirm(
+                "Delete all Atlas progress on this device? Export a backup first if you want to restore it later.",
+              )
+            ) {
+              return;
+            }
             resetProgress();
-            toast("Progress reset to the demo start");
+            toast("Local data cleared. Onboarding will start again.");
           }}
           className="mx-auto flex items-center gap-1.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
         >
-          <RotateCcw className="size-3.5" /> Reset demo progress
+          <RotateCcw className="size-3.5" /> Reset all local data
         </button>
 
         <p className="flex items-center justify-center gap-1.5 pb-2 text-[10px] text-muted-foreground">
-          <Sparkles className="size-3" /> Progress is stored on this device
+          <Sparkles className="size-3" /> Local beta · progress is stored only on this device
         </p>
       </div>
     </div>

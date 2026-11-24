@@ -603,7 +603,7 @@ function progressReply(ctx: AgentContext): AgentReply {
 
 function profileReply(ctx: AgentContext): AgentReply {
   return reply(
-    `Profile is where you tune the feed and track the long game.\n\n• Interests shape the For You ordering — add psychology, history, whatever pulls you in\n• Ambitions are your own goals, shown back to you daily\n• Realm mastery shows how deep you've gone in each of the six areas\n• Reset demo progress lives at the bottom\n\nYou currently follow ${ctx.interests.length} interest${ctx.interests.length === 1 ? "" : "s"}.`,
+    `Profile is where you tune the feed and track the long game.\n\n• Interests shape the For You ordering — add psychology, history, whatever pulls you in\n• Ambitions are your own goals, shown back to you daily\n• Realm mastery shows how deep you've gone in each of the six areas\n• Reset all local data and content reports live at the bottom\n\nYou currently follow ${ctx.interests.length} interest${ctx.interests.length === 1 ? "" : "s"}.`,
     [PROFILE_ACTION],
     ["What should I learn today?", "Show my progress", "How do achievements work?"],
   );
@@ -668,7 +668,7 @@ function practiceReply(ctx: AgentContext, category?: CategoryId): AgentReply {
 
 function supportReply(): AgentReply {
   return reply(
-    "Sorry you're stuck. A few things fix most Atlas problems:\n\n• Progress is stored locally in this browser, so clearing site data starts you fresh\n• If a screen looks wrong, pull to refresh — playback position and XP are saved\n• To start over deliberately, open Profile → Reset demo progress\n• Playback is simulated in this prototype; tapping pauses, swiping moves on\n\nIf something still feels broken after a refresh, tell me which screen and what you expected.",
+    "Sorry you're stuck. A few things fix most Atlas problems:\n\n• Progress is stored locally in this browser, so clearing site data starts you fresh\n• If a screen looks wrong, pull to refresh — playback position and XP are saved\n• To start over deliberately, open Profile → Reset all local data\n• Shorts are visual micro-lessons, not video files; deep dives state clearly when media is still in production\n\nIf something still feels broken after a refresh, tell me which screen and what you expected.",
     [PROFILE_ACTION, LIBRARY_ACTION],
     ["How do I reset my progress?", "Where are my saved videos?", "What can you do?"],
   );

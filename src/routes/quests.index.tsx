@@ -69,7 +69,7 @@ function Quests() {
         <Hud />
       </header>
 
-      <div className="space-y-5 px-4">
+      <div className="mx-auto w-full max-w-2xl space-y-5 px-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">
             Quest board

@@ -131,7 +131,7 @@ export const FEED: FeedCard[] = [
     title: "Why unfinished tasks haunt you",
     hook: "Your brain keeps open loops on repeat until you close them.",
     points: [
-      "Psychologist Bluma Zeigarnik noticed waiters remembered unpaid orders far better than paid ones.",
+      "Psychologist Bluma Zeigarnik found people recalled interrupted tasks better than completed ones.",
       "Incomplete tasks stay active in memory, nagging for attention.",
       "Just writing down a plan for a task can quiet the loop.",
     ],

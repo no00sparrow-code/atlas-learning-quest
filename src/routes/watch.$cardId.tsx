@@ -20,7 +20,7 @@ export const Route = createFileRoute("/watch/$cardId")({
           { name: "description", content: loaderData.hook },
           { property: "og:title", content: `${loaderData.title} — Atlas` },
           { property: "og:description", content: loaderData.hook },
-          { property: "og:type", content: "video.other" },
+          { property: "og:type", content: "article" },
           { name: "twitter:card", content: "summary_large_image" },
         ]
       : [{ title: "Lesson unavailable — Atlas" }, { name: "robots", content: "noindex" }],

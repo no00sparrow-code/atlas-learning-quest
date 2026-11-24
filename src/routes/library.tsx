@@ -78,7 +78,7 @@ function LibraryPage() {
         <Hud />
       </header>
 
-      <div className="space-y-5 px-4">
+      <div className="mx-auto w-full max-w-2xl space-y-5 px-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">
             Your library
@@ -204,7 +204,7 @@ function LibraryPage() {
         {activeList.length === 0 ? (
           <EmptyState tab={tab} />
         ) : (
-          <div className="space-y-2">
+          <div className="grid gap-2 md:grid-cols-2">
             {activeList.map((item) => (
               <ContentRow
                 key={item.key}

@@ -109,11 +109,10 @@ export function DataControls() {
           <CloudOff className="size-4 text-muted-foreground" />
         </span>
         <div>
-          <p className="text-sm font-bold">Cloud sync: not connected</p>
+          <p className="text-sm font-bold">Cloud sync: not enabled in this beta</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Accounts, secure sign-in and cross-device sync need a managed database and auth provider
-            configured in the Lovable editor. No fake sign-in is shown; local progress is the source
-            of truth until that is enabled.
+            There is no sign-in or cross-device sync yet. No fake account screen is shown. Local
+            progress is the source of truth — export a backup before switching devices.
           </p>
         </div>
       </div>

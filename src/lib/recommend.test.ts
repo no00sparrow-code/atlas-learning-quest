@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { FEED } from "@/data/cards";
 import { CATEGORIES } from "@/data/categories";
-import { createDefaultState } from "./atlas-store";
+import { createDemoState } from "./atlas-store";
 import { rankSeries, rankShorts, recommendNext, scoreShort } from "./recommend";
 
-const state = createDefaultState();
+const state = createDemoState();
 
 describe("recommendation engine", () => {
   it("puts retrieval before new content when reviews are due", () => {

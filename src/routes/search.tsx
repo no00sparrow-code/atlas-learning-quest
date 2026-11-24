@@ -104,7 +104,7 @@ function SearchPage() {
         </div>
       </header>
 
-      <div className="px-4">
+      <div className="mx-auto w-full max-w-2xl px-4">
         {!query.trim() ? (
           <div className="pt-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">

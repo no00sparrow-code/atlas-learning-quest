@@ -13,8 +13,9 @@ import { useRouterState } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AtlasProvider } from "@/lib/atlas-store";
+import { AtlasProvider, useAtlas } from "@/lib/atlas-store";
 import { BottomNav } from "@/components/atlas/BottomNav";
+import { Onboarding } from "@/components/atlas/Onboarding";
 import { GuideFab } from "@/components/atlas/GuideFab";
 import { AchievementPopup } from "@/components/atlas/AchievementPopup";
 import { XpToasts } from "@/components/atlas/XpToasts";
@@ -141,23 +142,57 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const immersive = /^\/(quests\/|series\/|watch\/|guide|review)/.test(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AtlasProvider>
-        <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-x-hidden bg-page">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </div>
-        {!immersive && <BottomNav />}
-        {!immersive && <GuideFab />}
-        <XpToasts />
-        <AchievementPopup />
-        <LevelUpOverlay />
-        <Toaster position="top-center" theme="dark" />
+        <AtlasGate />
       </AtlasProvider>
     </QueryClientProvider>
+  );
+}
+
+/** Holds rendering until local progress is known, then enforces first-run onboarding. */
+function AtlasGate() {
+  const { hydrated, state } = useAtlas();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  if (!hydrated) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-page">
+        <div className="text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-gradient-xp font-display text-lg font-black text-primary-foreground shadow-glow">
+            A
+          </span>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Opening Atlas
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // The privacy note is readable before onboarding; every learning route stays gated.
+  if (!state.onboarded && pathname !== "/about") return <Onboarding />;
+  return <AppFrame />;
+}
+
+function AppFrame() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const immersive = /^\/(quests\/|series\/|watch\/|guide|review)/.test(pathname);
+
+  return (
+    <>
+      <div className="relative mx-auto min-h-dvh w-full max-w-md overflow-x-hidden bg-page md:max-w-2xl lg:max-w-4xl">
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </div>
+      {!immersive && <BottomNav />}
+      {!immersive && pathname !== "/" && pathname !== "/profile" && <GuideFab />}
+      <XpToasts />
+      <AchievementPopup />
+      <LevelUpOverlay />
+      <Toaster position="top-center" theme="dark" />
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { Flame, Gem, Search } from "lucide-react";
+import { Flame, Gem, Search, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAtlas } from "@/lib/atlas-store";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -60,6 +60,13 @@ export function Hud({
         className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:text-foreground"
       >
         <Search className="size-3.5" />
+      </Link>
+      <Link
+        to="/guide"
+        aria-label="Ask Atlas Guide"
+        className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-primary transition-transform hover:scale-105"
+      >
+        <Sparkles className="size-3.5" />
       </Link>
     </div>
   );

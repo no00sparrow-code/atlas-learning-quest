@@ -148,12 +148,11 @@ function GuidePage() {
         </Link>
         <span className="relative flex size-10 items-center justify-center rounded-2xl bg-gradient-xp shadow-glow">
           <Sparkles className="size-5 text-primary-foreground" />
-          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-success" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-sm font-bold leading-tight">Atlas Guide</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            Learning · navigation · support
+            Rule-based library guide · no model connected
           </p>
         </div>
         <button
@@ -168,7 +167,8 @@ function GuidePage() {
       <div className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
         <div className="mx-auto flex max-w-md flex-col gap-3">
           <div className="mx-auto flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <Sparkles className="size-3 text-primary" /> Answers grounded in the Atlas library
+            <Sparkles className="size-3 text-primary" /> Deterministic answers from the Atlas
+            library — not a generative model
           </div>
 
           {messages.map((message) => (

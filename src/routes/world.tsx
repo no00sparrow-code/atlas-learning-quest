@@ -56,7 +56,7 @@ function World() {
         <Hud />
       </header>
 
-      <div className="px-4">
+      <div className="mx-auto w-full max-w-2xl px-4">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">

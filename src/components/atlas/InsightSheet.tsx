@@ -30,10 +30,15 @@ export function InsightSheetContent({ card, onClose }: { card: FeedCard; onClose
         ))}
       </ol>
       <div className="mt-5 rounded-2xl border border-cat bg-cat-soft p-4">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-cat">Takeaway</p>
-        <p className="mt-1 font-display text-base font-bold">{card.takeaway}</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-cat">
+          Learning objective
+        </p>
+        <p className="mt-1 font-display text-base font-bold">You can explain: {card.takeaway}</p>
       </div>
-      <div className="mt-4">
+      <p className="mt-4 rounded-xl bg-secondary/50 px-3 py-2 text-[11px] text-muted-foreground">
+        Visual micro-lesson with written notes — this beta does not pretend a video file is playing.
+      </p>
+      <div className="mt-3">
         <SourceList contentId={card.id} title={card.title} compact />
       </div>
       <div className="mt-4 flex gap-2">

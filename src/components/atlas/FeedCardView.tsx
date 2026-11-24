@@ -114,7 +114,7 @@ export function FeedCardView({ card, active, onOpenInsight }: Props) {
   return (
     <section
       data-cat={card.category}
-      className="relative h-dvh w-full snap-start snap-always overflow-hidden"
+      className="relative mx-auto h-dvh w-full snap-start snap-always overflow-hidden md:max-w-md md:border-x md:border-border/60"
     >
       <img
         src={category.image}
@@ -245,8 +245,8 @@ export function FeedCardView({ card, active, onOpenInsight }: Props) {
               style={{ width: `${progress * 100}%` }}
             />
           </div>
-          <span className="w-20 text-right text-[11px] font-semibold tabular-nums text-foreground/70">
-            {formatTime(progress * card.seconds)} / {formatTime(card.seconds)}
+          <span className="w-24 text-right text-[11px] font-semibold tabular-nums text-foreground/70">
+            {done ? "Visual complete" : "10s visual"} · {formatTime(card.seconds)} read
           </span>
           {paused && <Pause className="size-3 text-foreground/70" />}
         </div>

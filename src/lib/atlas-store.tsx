@@ -67,6 +67,8 @@ export interface ReviewAttempt {
 
 export interface AtlasState {
   version: 2;
+  /** False until the first-run introduction is completed. */
+  onboarded: boolean;
   name: string;
   handle: string;
   xp: number;
@@ -96,13 +98,44 @@ export interface AtlasState {
 
 const DAY = 86_400_000;
 
-/** Fresh demo profile, stamped with real relative dates so it feels lived-in. */
-export function createDefaultState(): AtlasState {
+/** A brand-new learner: no fake history, no inherited XP. */
+export function createFreshState(): AtlasState {
+  return {
+    version: 2,
+    onboarded: false,
+    name: "",
+    handle: "",
+    xp: 0,
+    streak: 0,
+    bestStreak: 0,
+    lastActiveDay: "",
+    xpByDay: {},
+    watched: [],
+    liked: [],
+    saved: [],
+    shorts: {},
+    episodes: {},
+    history: [],
+    completedQuests: {},
+    unlockedSkills: [],
+    achievements: {},
+    claimedGoals: [],
+    interests: [],
+    ambitions: [],
+    memory: {},
+    reviewLog: [],
+    reviewXpByDay: {},
+  };
+}
+
+/** Seeded profile used by tests and the demo; never used for a first-time visitor. */
+export function createDemoState(): AtlasState {
   const now = Date.now();
   const today = dayKey();
   const dayBefore = (n: number) => dayKey(new Date(now - n * DAY));
   return {
     version: 2,
+    onboarded: true,
     name: "Maya Chen",
     handle: "@maya.explores",
     xp: 380,
@@ -234,6 +267,7 @@ interface AtlasContextValue {
   recordQuizAttempt: (conceptId: string, correct: boolean) => void;
   importProgress: (raw: string) => { ok: boolean; error?: string };
   updateProfile: (name: string, handle: string) => void;
+  completeOnboarding: (name: string, interests: CategoryId[]) => void;
   resetProgress: () => void;
 }
 
@@ -267,7 +301,7 @@ export function withXp(state: AtlasState, amount: number, today: string = dayKey
 
 /** Merge stored state with defaults and migrate v1 (watched cards, no resume data). */
 function hydrate(raw: string | null, legacy: string | null): AtlasState {
-  const base = createDefaultState();
+  const base = createFreshState();
   const source = raw ?? legacy;
   if (!source) return base;
   try {
@@ -284,6 +318,8 @@ function hydrate(raw: string | null, legacy: string | null): AtlasState {
       ...base,
       ...parsed,
       version: 2,
+      // Existing saved progress predates onboarding; do not send those users back through it.
+      onboarded: parsed.onboarded ?? true,
       xpByDay: parsed.xpByDay ?? { ...base.xpByDay, [today]: parsed.xpToday ?? 0 },
       shorts: parsed.shorts ?? { ...base.shorts, ...shortsFromLegacy },
       episodes: parsed.episodes ?? base.episodes,
@@ -303,7 +339,7 @@ function hydrate(raw: string | null, legacy: string | null): AtlasState {
 }
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AtlasState>(createDefaultState);
+  const [state, setState] = useState<AtlasState>(createFreshState);
   const [hydrated, setHydrated] = useState(false);
   const [events, setEvents] = useState<XpEvent[]>([]);
   const [levelUp, setLevelUp] = useState<number | null>(null);
@@ -604,6 +640,22 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const completeOnboarding = useCallback((name: string, interests: CategoryId[]) => {
+    const cleanName = name.trim().slice(0, 48);
+    setState((prev) => ({
+      ...prev,
+      name: cleanName || "Learner",
+      handle:
+        prev.handle ||
+        `@${(cleanName || "learner")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "")
+          .slice(0, 18)}`,
+      interests,
+      onboarded: true,
+    }));
+  }, []);
+
   const resetProgress = useCallback(() => {
     achievementsPrimed.current = false;
     setAchievementQueue([]);
@@ -611,7 +663,13 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     setEvents([]);
     prevXp.current = null;
     prevLevel.current = null;
-    setState(createDefaultState());
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    setState(createFreshState());
   }, []);
 
   const dismissAchievement = useCallback(() => {
@@ -650,6 +708,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     recordQuizAttempt,
     importProgress,
     updateProfile,
+    completeOnboarding,
     resetProgress,
   };
 
