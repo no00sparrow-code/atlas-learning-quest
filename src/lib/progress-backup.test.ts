@@ -108,7 +108,7 @@ describe("progress backup validation", () => {
   it("migrates legacy watched cards and daily XP into version two state", () => {
     const base = createFreshState();
     const state = normaliseProgressBackup(
-      { version: 1, xp: 90, xpToday: 25, watched: ["legacy-card"] },
+      { version: 1, xp: 90, xpToday: 25, watched: ["legacy-card", "__proto__"] },
       base,
       TODAY,
       456,
@@ -123,6 +123,8 @@ describe("progress backup validation", () => {
       completed: true,
       updatedAt: 456,
     });
+    expect(Object.keys(state?.shorts ?? {})).toEqual(["legacy-card"]);
+    expect(Object.getPrototypeOf(state?.shorts)).toBe(Object.prototype);
   });
 
   it("rejects impossible calendar dates in review schedules", () => {
