@@ -86,7 +86,7 @@ flowchart TD
 - `src/lib/atlas-store.tsx`, `src/lib/agent.ts` and `src/routes/studio.tsx` are large modules. Refactor only behind focused tests.
 - Browser storage and browser-local quotas are user-controlled; neither is an authorisation or financial boundary.
 - The AI adapters execute from the browser and can contact a configured local or external endpoint. There is no server proxy or central spend enforcement.
-- The backend schema has not been applied. A creator-profile update policy requires security review before activation.
+- The backend schema has not been applied. Creator-profile self-update policies were tightened in the reference SQL; live RLS review and two-account tests are still required.
 - The Studio pipeline is intentionally honest about unavailable research and narration. Do not relabel structural URL checks as factual verification.
 
 ## Current decisions
