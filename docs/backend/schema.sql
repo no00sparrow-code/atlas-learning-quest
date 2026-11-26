@@ -252,8 +252,11 @@ security definer
 set search_path = ''
 as $
 begin
-  if new.status is distinct from old.status and not public.is_owner() then
-    raise exception 'Only platform owners can change creator approval status'
+  if new.status is distinct from old.status
+    and coalesce(auth.role(), '') <> 'service_role'
+    and not public.is_owner()
+  then
+    raise exception 'Only platform owners or trusted server functions can change creator approval status'
       using errcode = '42501';
   end if;
   return new;
