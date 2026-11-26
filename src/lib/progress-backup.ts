@@ -29,7 +29,7 @@ function dateNumberMap(value: unknown): Record<string, number> {
   const result: Record<string, number> = {};
   if (!source) return result;
   for (const [key, item] of Object.entries(source).slice(0, MAX_ITEMS)) {
-    if (DATE_KEY.test(key) && typeof item === "number" && Number.isFinite(item) && item >= 0) {
+    if (isDateKey(key) && typeof item === "number" && Number.isFinite(item) && item >= 0) {
       result[key] = Math.min(1_000_000_000, Math.floor(item));
     }
   }
@@ -79,7 +79,7 @@ function memoryMap(value: unknown) {
   if (!source) return result;
   for (const [id, item] of Object.entries(source).slice(0, MAX_ITEMS)) {
     const entry = record(item);
-    if (!entry || !safeKey(id) || typeof entry.strength !== "number" || !Number.isFinite(entry.strength) || typeof entry.ease !== "number" || !Number.isFinite(entry.ease) || typeof entry.dueDay !== "string" || !DATE_KEY.test(entry.dueDay)) continue;
+    if (!entry || !safeKey(id) || typeof entry.strength !== "number" || !Number.isFinite(entry.strength) || typeof entry.ease !== "number" || !Number.isFinite(entry.ease) || typeof entry.dueDay !== "string" || !isDateKey(entry.dueDay)) continue;
     const attempts = boundedNumber(entry.attempts);
     result[id] = {
       attempts,
@@ -88,7 +88,7 @@ function memoryMap(value: unknown) {
       ease: Math.max(1.3, Math.min(2.8, entry.ease)),
       interval: boundedNumber(entry.interval, 0, 120),
       dueDay: entry.dueDay,
-      lastSeen: typeof entry.lastSeen === "string" && DATE_KEY.test(entry.lastSeen) ? entry.lastSeen : "",
+      lastSeen: typeof entry.lastSeen === "string" && isDateKey(entry.lastSeen) ? entry.lastSeen : "",
     };
   }
   return result;
@@ -109,7 +109,7 @@ export function normaliseProgressBackup<T extends object>(value: unknown, base: 
   if (!parsed) return null;
   if (parsed.version !== undefined && parsed.version !== 1 && parsed.version !== 2) return null;
   if (parsed.version === undefined && !("xp" in parsed || "watched" in parsed)) return null;
-  if (!DATE_KEY.test(today)) return null;
+  if (!isDateKey(today)) return null;
 
   const defaults = base as JsonRecord;
   const watched = boundedStrings(parsed.watched, (defaults.watched as string[]) ?? []);
@@ -142,7 +142,7 @@ export function normaliseProgressBackup<T extends object>(value: unknown, base: 
     xp: boundedNumber(parsed.xp, (defaults.xp as number) ?? 0),
     streak: boundedNumber(parsed.streak, (defaults.streak as number) ?? 0, 100_000),
     bestStreak: boundedNumber(parsed.bestStreak, (defaults.bestStreak as number) ?? 0, 100_000),
-    lastActiveDay: typeof parsed.lastActiveDay === "string" && DATE_KEY.test(parsed.lastActiveDay) ? parsed.lastActiveDay : "",
+    lastActiveDay: typeof parsed.lastActiveDay === "string" && isDateKey(parsed.lastActiveDay) ? parsed.lastActiveDay : "",
     xpByDay,
     watched,
     liked: boundedStrings(parsed.liked, (defaults.liked as string[]) ?? []),
