@@ -240,6 +240,8 @@ export interface XpEvent {
 interface AtlasContextValue {
   state: AtlasState;
   hydrated: boolean;
+  recoveryBackup: string | null;
+  clearRecoveryBackup: () => void;
   level: LevelInfo;
   skillPoints: number;
   today: string;
@@ -312,6 +314,7 @@ function hydrate(
 export function AtlasProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AtlasState>(createFreshState);
   const [hydrated, setHydrated] = useState(false);
+  const [recoveryBackup, setRecoveryBackup] = useState<string | null>(null);
   const [events, setEvents] = useState<XpEvent[]>([]);
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
@@ -327,8 +330,16 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       const legacy = raw ? null : localStorage.getItem(LEGACY_KEY);
       const restored = hydrate(raw, legacy);
       setState(restored.state);
-      if (restored.recovery && !localStorage.getItem(RECOVERY_KEY)) {
-        localStorage.setItem(RECOVERY_KEY, restored.recovery);
+      try {
+        const existingRecovery = localStorage.getItem(RECOVERY_KEY);
+        if (restored.recovery && !existingRecovery) {
+          localStorage.setItem(RECOVERY_KEY, restored.recovery);
+          setRecoveryBackup(restored.recovery);
+        } else {
+          setRecoveryBackup(existingRecovery);
+        }
+      } catch {
+        setRecoveryBackup(restored.recovery);
       }
     } catch {
       /* storage unavailable: run from defaults */
@@ -598,6 +609,15 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const clearRecoveryBackup = useCallback(() => {
+    try {
+      localStorage.removeItem(RECOVERY_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    setRecoveryBackup(null);
+  }, []);
+
   const updateProfile = useCallback((name: string, handle: string) => {
     const cleanName = name.trim().slice(0, 48);
     if (!cleanName) return;
@@ -676,6 +696,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     recordReview,
     recordQuizAttempt,
     importProgress,
+    recoveryBackup,
+    clearRecoveryBackup,
     updateProfile,
     completeOnboarding,
     resetProgress,
