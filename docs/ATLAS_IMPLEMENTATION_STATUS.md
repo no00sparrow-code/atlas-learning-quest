@@ -30,7 +30,7 @@ been verified.
 | Default branch | `main` |
 | Development branch | `codex/atlas-foundation-sprint-1` |
 | Dependency baseline | The original lockfile was out of sync with `package.json` (AJV and transitive dependencies). It was regenerated from the manifest on the development branch; clean `npm ci` now succeeds. |
-| Verification | GitHub Actions run [45840441875](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45840441875) passed: 21 test files / 103 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
+| Verification | GitHub Actions run [45840661804](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45840661804) passed: 21 test files / 103 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
 
 Do not infer a successful test or build from the existence of a test file or CI
 workflow. Record the exact workflow run and step result when available.
