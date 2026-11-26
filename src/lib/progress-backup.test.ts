@@ -138,7 +138,7 @@ describe("progress backup validation", () => {
     const restored = restoreProgressBackup(primary, base, TODAY, 789, legacy);
 
     expect(restored.state.xp).toBe(80);
-    expect(restored.state.shorts["old-card"].completed).toBe(true);
+    expect(restored.state.shorts["old-card"]?.completed).toBe(true);
     expect(restored.recovery).toBe(primary);
     expect(restored.error).toBe("That file is not a supported Atlas backup.");
   });
