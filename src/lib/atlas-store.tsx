@@ -20,6 +20,7 @@ import {
   XP_PER_NODE,
   type LevelInfo,
 } from "./progression";
+import { parseProgressBackup } from "./progress-backup";
 import {
   buildSnapshot,
   DAILY_GOAL_BONUS,
@@ -299,43 +300,13 @@ export function withXp(state: AtlasState, amount: number, today: string = dayKey
   };
 }
 
-/** Merge stored state with defaults and migrate v1 (watched cards, no resume data). */
+/** Validate stored state and migrate v1 (watched cards, no resume data). */
 function hydrate(raw: string | null, legacy: string | null): AtlasState {
   const base = createFreshState();
   const source = raw ?? legacy;
   if (!source) return base;
-  try {
-    const parsed = JSON.parse(source) as Partial<AtlasState> & { xpToday?: number };
-    const today = dayKey();
-    const watched = Array.isArray(parsed.watched) ? parsed.watched : base.watched;
-    const shortsFromLegacy: Record<string, VideoProgress> = {};
-    if (!parsed.shorts) {
-      for (const id of watched) {
-        shortsFromLegacy[id] = { position: 1, completed: true, updatedAt: Date.now() };
-      }
-    }
-    return {
-      ...base,
-      ...parsed,
-      version: 2,
-      // Existing saved progress predates onboarding; do not send those users back through it.
-      onboarded: parsed.onboarded ?? true,
-      xpByDay: parsed.xpByDay ?? { ...base.xpByDay, [today]: parsed.xpToday ?? 0 },
-      shorts: parsed.shorts ?? { ...base.shorts, ...shortsFromLegacy },
-      episodes: parsed.episodes ?? base.episodes,
-      history: parsed.history ?? base.history,
-      achievements: parsed.achievements ?? {},
-      claimedGoals: parsed.claimedGoals ?? [],
-      memory: parsed.memory ?? {},
-      reviewLog: parsed.reviewLog ?? [],
-      reviewXpByDay: parsed.reviewXpByDay ?? {},
-      watched,
-      saved: parsed.saved ?? base.saved,
-      liked: parsed.liked ?? base.liked,
-    };
-  } catch {
-    return base;
-  }
+  const result = parseProgressBackup(source, base, dayKey());
+  return result.ok ? result.state : base;
 }
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
@@ -617,16 +588,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const importProgress = useCallback((raw: string) => {
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { ok: false, error: "That file is not an Atlas backup." };
-      }
-      setState(hydrate(JSON.stringify(parsed), null));
-      return { ok: true };
-    } catch {
-      return { ok: false, error: "Could not read that backup file." };
-    }
+    const result = parseProgressBackup(raw, createFreshState(), dayKey());
+    if (!result.ok) return result;
+    setState(result.state);
+    return { ok: true };
   }, []);
 
   const updateProfile = useCallback((name: string, handle: string) => {
