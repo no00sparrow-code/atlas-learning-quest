@@ -95,10 +95,10 @@ Files changed on the development branch:
 - `docs/ATLAS_AI_AGENTS.md`
 - `docs/ATLAS_INSTITUTIONAL.md`
 
-The workflow now reconciles the lockfile on development branches, commits that repair,
-then verifies a clean `npm ci` install. Run 45837657513 passed all four quality gates:
-93 tests, lint, TypeScript and production build. Ten existing Fast Refresh warnings remain;
-there are no lint errors.
+The package-lock mismatch was repaired and committed on the development branch. CI is now
+read-only and verifies the committed lockfile with a clean `npm ci` install. Run 45837657513
+passed all four quality gates: 93 tests, lint, TypeScript and production build. Ten existing
+Fast Refresh warnings remain; there are no lint errors.
 
 ## Known security and architecture risks
 
