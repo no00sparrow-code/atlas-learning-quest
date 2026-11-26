@@ -11,6 +11,7 @@ import {
 import type { CategoryId } from "@/data/categories";
 import { CATEGORIES } from "@/data/categories";
 import { SKILLS } from "@/data/skills";
+import { getQuest } from "@/data/quests";
 import { evaluateAchievements } from "@/data/achievements";
 import { getEpisode, episodeXp } from "@/data/series";
 import {
@@ -86,6 +87,7 @@ export interface AtlasState {
   episodes: Record<string, VideoProgress>;
   history: HistoryEntry[];
   completedQuests: Record<string, QuestResult>;
+  challengeResponses: Record<string, { text: string; updatedAt: number }>;
   unlockedSkills: string[];
   achievements: Record<string, number>;
   claimedGoals: string[];
@@ -119,6 +121,7 @@ export function createFreshState(): AtlasState {
     episodes: {},
     history: [],
     completedQuests: {},
+    challengeResponses: {},
     unlockedSkills: [],
     achievements: {},
     claimedGoals: [],
@@ -262,6 +265,7 @@ interface AtlasContextValue {
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
   completeQuest: (id: string, xp: number, score?: string) => void;
+  saveChallengeResponse: (id: string, text: string) => boolean;
   unlockSkill: (id: string) => { ok: boolean; reason?: string };
   canUnlockSkill: (id: string) => { ok: boolean; reason?: string };
   toggleInterest: (id: CategoryId) => void;
@@ -508,6 +512,22 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const saveChallengeResponse = useCallback((id: string, text: string): boolean => {
+    const quest = getQuest(id);
+    const clean = text.trim().slice(0, 5_000);
+    if (quest?.type !== "challenge" || quest.mode !== "write" || clean.length < (quest.minChars ?? 80)) {
+      return false;
+    }
+    setState((prev) => ({
+      ...prev,
+      challengeResponses: {
+        ...prev.challengeResponses,
+        [id]: { text: clean, updatedAt: Date.now() },
+      },
+    }));
+    return true;
+  }, []);
+
   const canUnlockSkill = useCallback(
     (id: string): { ok: boolean; reason?: string } => {
       const node = SKILLS.find((s) => s.id === id);
@@ -688,6 +708,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     toggleLike,
     toggleSave,
     completeQuest,
+    saveChallengeResponse,
     unlockSkill,
     canUnlockSkill,
     toggleInterest,
