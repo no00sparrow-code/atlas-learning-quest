@@ -176,6 +176,7 @@ export function createDemoState(): AtlasState {
       { kind: "short", id: "gps-einstein", at: now - 1 * DAY },
     ],
     completedQuests: { "mind-tricks": { xp: 60, score: "3/3" } },
+    challengeResponses: {},
     unlockedSkills: ["psy-1", "sci-1", "tec-1"],
     achievements: {},
     claimedGoals: [],
