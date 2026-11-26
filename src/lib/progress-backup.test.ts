@@ -55,6 +55,9 @@ describe("progress backup validation", () => {
 
   it("bounds progress and recall values while dropping malformed entries", () => {
     const base = createFreshState();
+    const unsafeShorts = Object.fromEntries([
+      ["__proto__", { position: 1, completed: true }],
+    ]);
     const state = normaliseProgressBackup(
       {
         version: 2,
@@ -64,7 +67,7 @@ describe("progress backup validation", () => {
         shorts: {
           lesson: { position: 4, completed: false, updatedAt: 10 },
           broken: { position: Number.NaN, completed: false },
-          "__proto__": { position: 1, completed: true },
+          ...unsafeShorts,
         },
         memory: {
           concept: {
