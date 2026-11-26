@@ -259,12 +259,13 @@ export function normaliseProgressBackup<T extends object>(
   }
 
   const interests = Array.isArray(parsed.interests)
-    ? parsed.interests
-        .filter(
-          (item): item is string =>
-            typeof item === "string" && CATEGORY_IDS.has(item),
-        )
-        .slice(0, CATEGORY_IDS.size)
+    ? [
+        ...new Set(
+          parsed.interests.filter(
+            (item): item is string => typeof item === "string" && CATEGORY_IDS.has(item),
+          ),
+        ),
+      ].slice(0, CATEGORY_IDS.size)
     : ((defaults.interests as string[]) ?? []);
 
   const xpByDay = dateNumberMap(parsed.xpByDay);
