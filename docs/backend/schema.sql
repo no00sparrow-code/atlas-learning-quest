@@ -264,7 +264,7 @@ end;
 $;
 
 revoke all on function public.guard_creator_profile_status() from public;
-grant execute on function public.guard_creator_profile_status() to authenticated;
+grant execute on function public.guard_creator_profile_status() to authenticated, service_role;
 
 create or replace function public.touch_updated_at()
 returns trigger
