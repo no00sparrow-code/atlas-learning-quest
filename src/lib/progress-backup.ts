@@ -355,3 +355,18 @@ export function parseProgressBackup<T extends object>(
     return { ok: false, error: "Could not read that backup file." };
   }
 }
+
+/** Preserve the original raw backup for recovery when hydration cannot trust it. */
+export function restoreProgressBackup<T extends object>(
+  raw: string | null,
+  base: T,
+  today: string,
+  now = Date.now(),
+): { state: T; recovery: string | null; error: string | null } {
+  if (raw === null) return { state: base, recovery: null, error: null };
+
+  const result = parseProgressBackup(raw, base, today, now);
+  return result.ok
+    ? { state: result.state, recovery: null, error: null }
+    : { state: base, recovery: raw, error: result.error };
+}
