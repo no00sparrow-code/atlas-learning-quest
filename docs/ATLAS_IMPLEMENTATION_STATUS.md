@@ -66,7 +66,7 @@ workflow. Record the exact workflow run and step result when available.
 | Institutional Atlas | NOT IMPLEMENTED | Reference schema and master directive | Organisations, teacher permissions, classrooms, assignments and safeguarding | 10 |
 | Production monitoring | PREPARED | Browser-local status route and snapshots | No scheduled server checks or authoritative platform metrics | 11 |
 
-## Current sprint: progress integrity
+## Current sprint: data integrity and core learning quality
 
 The first foundation task adds a dedicated progress-backup boundary:
 
@@ -75,8 +75,11 @@ The first foundation task adds a dedicated progress-backup boundary:
 - Rebuild the state from known fields instead of spreading arbitrary imported properties.
 - Bound list sizes, string lengths, numeric values, progress fractions and memory parameters.
 - Validate category IDs and calendar dates.
-- Drop malformed nested progress, history, quest, memory and review entries.
+- Drop malformed nested progress, history, quest, challenge-response, memory and review entries.
 - Preserve legacy watched-card migration and legacy daily XP.
+- Fall back to a valid legacy backup if the current primary is invalid; retain rejected raw data separately and offer a recovery download.
+- Persist submitted write-challenge answers locally, restore them when learners return and include them in progress backups.
+- Rank next concepts by learner interest while keeping subject diversity and prerequisite readiness.
 - Route both local hydration and explicit import through the same validator.
 
 Files changed on the development branch:
@@ -97,10 +100,11 @@ Files changed on the development branch:
 - `docs/ATLAS_SECURITY.md`
 - `docs/ATLAS_AI_AGENTS.md`
 - `docs/ATLAS_INSTITUTIONAL.md`
+- `docs/ATLAS_IMPLEMENTATION_STATUS.md`
 
 The package-lock mismatch was repaired and committed on the development branch. CI is now
-read-only and verifies the committed lockfile with a clean `npm ci` install. Run 45837657513
-passed all four quality gates: 93 tests, lint, TypeScript and production build. Ten existing
+read-only and verifies the committed lockfile with a clean `npm ci` install. Run 45839366435
+passed all four quality gates: 100 tests, lint, TypeScript and production build. Ten existing
 Fast Refresh warnings remain; there are no lint errors.
 
 ## Known security and architecture risks
