@@ -245,15 +245,33 @@ $$;
 revoke all on function public.is_owner() from public;
 grant execute on function public.is_owner() to authenticated;
 
+create or replace function public.guard_creator_profile_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if new.status is distinct from old.status and not public.is_owner() then
+    raise exception 'Only platform owners can change creator approval status'
+      using errcode = '42501';
+  end if;
+  return new;
+end;
+$;
+
+revoke all on function public.guard_creator_profile_status() from public;
+grant execute on function public.guard_creator_profile_status() to authenticated;
+
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
-as $$
+as $
 begin
   new.updated_at = now();
   return new;
 end;
-$$;
+$;
 
 create or replace function public.create_profile_for_new_user()
 returns trigger
@@ -282,6 +300,10 @@ create index if not exists purchases_buyer_idx on public.purchases(buyer_id);
 create index if not exists purchases_product_idx on public.purchases(product_id);
 create index if not exists moderation_reports_status_idx on public.moderation_reports(status);
 create index if not exists health_checks_checked_at_idx on public.health_checks(checked_at desc);
+
+drop trigger if exists creator_profiles_status_guard on public.creator_profiles;
+create trigger creator_profiles_status_guard before update on public.creator_profiles
+for each row execute function public.guard_creator_profile_status();
 
 drop trigger if exists creator_profiles_touch on public.creator_profiles;
 create trigger creator_profiles_touch before update on public.creator_profiles
@@ -372,25 +394,14 @@ drop policy if exists creator_profiles_own_write on public.creator_profiles;
 create policy creator_profiles_own_write on public.creator_profiles
 for insert with check (auth.uid() = user_id and status = 'pending');
 
--- Creators may edit their own profile, but cannot change their approval state.
--- Separate policies require the old and new row to remain in the same state.
-drop policy if exists creator_profiles_own_update on public.creator_profiles;
+-- Creator profile updates are row-scoped; a trigger independently prevents self-approval.
 drop policy if exists creator_profiles_pending_update on public.creator_profiles;
-create policy creator_profiles_pending_update on public.creator_profiles
-for update
-using (auth.uid() = user_id and status = 'pending')
-with check (auth.uid() = user_id and status = 'pending');
-
 drop policy if exists creator_profiles_approved_update on public.creator_profiles;
-create policy creator_profiles_approved_update on public.creator_profiles
-for update
-using (auth.uid() = user_id and status = 'approved')
-with check (auth.uid() = user_id and status = 'approved');
-
--- Only a platform owner can change approval status or update suspended profiles.
 drop policy if exists creator_profiles_owner_update on public.creator_profiles;
-create policy creator_profiles_owner_update on public.creator_profiles
-for update using (public.is_owner()) with check (public.is_owner());
+drop policy if exists creator_profiles_own_update on public.creator_profiles;
+create policy creator_profiles_own_update on public.creator_profiles
+for update using (auth.uid() = user_id or public.is_owner())
+with check (auth.uid() = user_id or public.is_owner());
 
 -- Content: published rows are public; owners can manage everything.
 drop policy if exists content_items_public_read on public.content_items;
