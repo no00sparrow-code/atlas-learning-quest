@@ -87,6 +87,12 @@ Files changed on the development branch:
 - `src/components/atlas/DataControls.tsx` and `src/components/atlas/DataControls.test.tsx`
 - `package-lock.json` (regenerated from the existing manifest; no dependency was intentionally added)
 - `.github/workflows/ci.yml`
+- `docs/ATLAS_ARCHITECTURE.md`
+- `docs/ATLAS_COST_MODEL.md`
+- `docs/ATLAS_DEPLOYMENT.md`
+- `docs/ATLAS_SECURITY.md`
+- `docs/ATLAS_AI_AGENTS.md`
+- `docs/ATLAS_INSTITUTIONAL.md`
 
 The workflow now reconciles the lockfile on development branches, commits that repair,
 then verifies a clean `npm ci` install. Run 45836566707 passed all four quality gates:
