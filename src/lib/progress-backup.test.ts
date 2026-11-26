@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createFreshState } from "./atlas-store";
-import { normaliseProgressBackup, parseProgressBackup } from "./progress-backup";
+import {
+  normaliseProgressBackup,
+  parseProgressBackup,
+  restoreProgressBackup,
+} from "./progress-backup";
 
 const TODAY = "2026-11-26";
 
@@ -125,6 +129,17 @@ describe("progress backup validation", () => {
     });
     expect(Object.keys(state?.shorts ?? {})).toEqual(["legacy-card"]);
     expect(Object.getPrototypeOf(state?.shorts)).toBe(Object.prototype);
+  });
+
+  it("keeps rejected local backups available for recovery", () => {
+    const base = createFreshState();
+    const raw = '{"version":99,"xp":500}';
+    const restored = restoreProgressBackup(raw, base, TODAY, 789);
+
+    expect(restored.state).toBe(base);
+    expect(restored.recovery).toBe(raw);
+    expect(restored.error).toBe("That file is not a supported Atlas backup.");
+    expect(restoreProgressBackup(null, base, TODAY).recovery).toBeNull();
   });
 
   it("rejects impossible calendar dates in review schedules", () => {
