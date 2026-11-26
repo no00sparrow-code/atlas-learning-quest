@@ -362,11 +362,22 @@ export function restoreProgressBackup<T extends object>(
   base: T,
   today: string,
   now = Date.now(),
+  fallbackRaw: string | null = null,
 ): { state: T; recovery: string | null; error: string | null } {
-  if (raw === null) return { state: base, recovery: null, error: null };
+  if (raw === null) {
+    if (fallbackRaw === null) return { state: base, recovery: null, error: null };
+    const fallback = parseProgressBackup(fallbackRaw, base, today, now);
+    return fallback.ok
+      ? { state: fallback.state, recovery: null, error: null }
+      : { state: base, recovery: fallbackRaw, error: fallback.error };
+  }
 
   const result = parseProgressBackup(raw, base, today, now);
-  return result.ok
-    ? { state: result.state, recovery: null, error: null }
-    : { state: base, recovery: raw, error: result.error };
+  if (result.ok) return { state: result.state, recovery: null, error: null };
+
+  if (fallbackRaw !== null) {
+    const fallback = parseProgressBackup(fallbackRaw, base, today, now);
+    if (fallback.ok) return { state: fallback.state, recovery: raw, error: result.error };
+  }
+  return { state: base, recovery: raw, error: result.error };
 }
