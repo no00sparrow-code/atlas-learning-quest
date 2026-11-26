@@ -40,9 +40,9 @@ These controls improve local data integrity; they do not create cloud account is
 
 ## Specific SQL review finding
 
-The broad creator self-update policy has been replaced in the reference schema with separate pending and approved self-update policies that require the row to remain in the same status, plus an owner-only update policy. The creator-profile `updated_at` trigger is also present, and the `is_owner()` helper uses an empty search path with schema-qualified references.
+The reference schema retains row-scoped creator self-updates but now has a security-definer `BEFORE UPDATE` trigger that rejects any creator approval-status change unless `public.is_owner()` is true. The trigger uses an empty search path, and the owner helper uses schema-qualified references. The creator-profile `updated_at` trigger is also present.
 
-This corrects the identified self-approval path in the draft SQL, but the schema remains unapplied. Review it and run two-account RLS tests in the owner-controlled Lovable Cloud project before activation. This was a risk in the prepared reference schema, not an active production vulnerability.
+This adds a server-side guard against self-approval in the draft SQL, but the schema remains unapplied and has not been executed against a Supabase project. Review the function and run two-account RLS tests in the owner-controlled Lovable Cloud project before activation. This was a risk in the prepared reference schema, not an active production vulnerability.
 
 ## Mandatory backend rules
 
