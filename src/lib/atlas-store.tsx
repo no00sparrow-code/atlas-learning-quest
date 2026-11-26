@@ -306,7 +306,7 @@ function hydrate(
   raw: string | null,
   legacy: string | null,
 ): { state: AtlasState; recovery: string | null; error: string | null } {
-  return restoreProgressBackup(raw ?? legacy, createFreshState(), dayKey());
+  return restoreProgressBackup(raw, createFreshState(), dayKey(), Date.now(), legacy);
 }
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
