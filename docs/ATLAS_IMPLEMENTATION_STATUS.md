@@ -30,7 +30,7 @@ been verified.
 | Default branch | `main` |
 | Development branch | `codex/atlas-foundation-sprint-1` |
 | Dependency baseline | The original lockfile was out of sync with `package.json` (AJV and transitive dependencies). It was regenerated from the manifest on the development branch; clean `npm ci` now succeeds. |
-| Verification | GitHub Actions run [45835209016](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45835209016) passed: 17 test files / 84 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
+| Verification | GitHub Actions run [45836566707](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45836566707) passed: 18 test files / 88 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
 
 Do not infer a successful test or build from the existence of a test file or CI
 workflow. Record the exact workflow run and step result when available.
@@ -46,7 +46,7 @@ workflow. Record the exact workflow run and step result when available.
 | XP, levels and achievements | PARTIAL | `src/lib/progression.ts`, `src/data/achievements.ts`, `src/lib/atlas-store.tsx` | Expand Atlas Man attributes, Knowledge Points and collaborative progression | 2/6 |
 | Spaced repetition | PARTIAL | `src/lib/memory.ts`, review questions and review route | Validate broader learning outcomes and queue behaviour | 2 |
 | Profile and local data | PARTIAL | `src/lib/atlas-store.tsx`, `src/routes/profile.tsx`, data controls | No account-backed profile, cross-device sync or server-side export/deletion | 1 |
-| Progress backup | PARTIAL | Shared validator used by local hydration and explicit import; five focused tests cover compatibility, malformed/oversized input, bounds, date validation and prototype-key rejection | Browser-level export/import and real saved-data recovery still need end-to-end coverage | 1 |
+| Progress backup | PARTIAL | Shared validator used by local hydration and explicit import; legacy fallback; quarantined raw recovery copy exposed in profile data controls | Browser-level export/import and real saved-data recovery still need end-to-end coverage | 1 |
 | Atlas Guide | PARTIAL | `src/lib/agent.ts`, `src/lib/ai/guide.ts`, `src/lib/ai/prompt.ts`, `src/routes/guide.tsx` | Only library fallback and optional local model path; no hosted Head AI | 3 |
 | AI provider adapters | PARTIAL | `src/lib/ai/providers.ts`, `src/lib/ai/config.ts`, `src/lib/ai/types.ts` | No server-side credentials, provider routing or global quota enforcement | 3 |
 | Agent catalog | PARTIAL | `src/lib/ai/agents.ts`, `src/lib/ai/pipeline.ts` | Catalog must continue to expose only genuinely executable capabilities | 3/4 |
@@ -84,12 +84,13 @@ Files changed on the development branch:
 - `src/lib/progress-backup.ts`
 - `src/lib/progress-backup.test.ts`
 - `src/lib/atlas-store.tsx`
+- `src/components/atlas/DataControls.tsx` and `src/components/atlas/DataControls.test.tsx`
 - `package-lock.json` (regenerated from the existing manifest; no dependency was intentionally added)
 - `.github/workflows/ci.yml`
 
 The workflow now reconciles the lockfile on development branches, commits that repair,
-then verifies a clean `npm ci` install. Run 45835209016 passed all four quality gates:
-84 tests, lint, TypeScript and production build. Ten existing Fast Refresh warnings remain;
+then verifies a clean `npm ci` install. Run 45836566707 passed all four quality gates:
+88 tests, lint, TypeScript and production build. Ten existing Fast Refresh warnings remain;
 there are no lint errors.
 
 ## Known security and architecture risks
