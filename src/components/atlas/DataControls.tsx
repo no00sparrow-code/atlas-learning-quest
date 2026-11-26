@@ -9,13 +9,8 @@ import { Button } from "@/components/ui/button";
  * There is no fake "sign in" here: accounts need a configured backend.
  */
 export function DataControls() {
-  const {
-    state,
-    importProgress,
-    updateProfile,
-    recoveryBackup,
-    clearRecoveryBackup,
-  } = useAtlas();
+  const { state, importProgress, updateProfile, recoveryBackup, clearRecoveryBackup } =
+    useAtlas();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(state.name);
   const [handle, setHandle] = useState(state.handle);
@@ -96,10 +91,7 @@ export function DataControls() {
       </div>
 
       {recoveryBackup && (
-        <div
-          role="alert"
-          className="rounded-2xl border border-warning/30 bg-warning/10 p-4"
-        >
+        <div role="alert" className="rounded-2xl border border-warning/30 bg-warning/10 p-4">
           <p className="text-sm font-bold">A previous progress file needs recovery</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Atlas could not safely read the previous local backup. The original file was kept
