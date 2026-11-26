@@ -34,6 +34,7 @@ import {
   XP_FOR_REVIEW_ATTEMPT,
   type ConceptMemory,
 } from "./memory";
+import { isAtlasBackup } from "./backup";
 
 const STORAGE_KEY = "atlas-progress-v2";
 const LEGACY_KEY = "atlas-progress-v1";
@@ -619,10 +620,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const importProgress = useCallback((raw: string) => {
     try {
       const parsed = JSON.parse(raw) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { ok: false, error: "That file is not an Atlas backup." };
+      if (!isAtlasBackup(parsed)) {
+        return { ok: false, error: "That file is not a valid Atlas backup." };
       }
-      setState(hydrate(JSON.stringify(parsed), null));
+      setState(hydrate(raw, null));
       return { ok: true };
     } catch {
       return { ok: false, error: "Could not read that backup file." };
