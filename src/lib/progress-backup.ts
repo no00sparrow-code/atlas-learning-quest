@@ -17,9 +17,7 @@ function isDateKey(value: unknown): value is string {
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year!, month! - 1, day!));
   return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month! - 1 &&
-    date.getUTCDate() === day
+    date.getUTCFullYear() === year && date.getUTCMonth() === month! - 1 && date.getUTCDate() === day
   );
 }
 
@@ -101,9 +99,7 @@ function progressMap(
   return result;
 }
 
-function historyList(
-  value: unknown,
-): Array<{ kind: "short" | "episode"; id: string; at: number }> {
+function historyList(value: unknown): Array<{ kind: "short" | "episode"; id: string; at: number }> {
   if (!Array.isArray(value)) return [];
 
   return value.slice(0, 100).flatMap((item) => {
@@ -202,9 +198,7 @@ function memoryMap(value: unknown): Record<
   return result;
 }
 
-function reviewLog(
-  value: unknown,
-): Array<{
+function reviewLog(value: unknown): Array<{
   at: number;
   conceptId: string;
   correct: boolean;
@@ -291,8 +285,11 @@ export function normaliseProgressBackup<T extends object>(
     ...defaults,
     version: 2,
     onboarded: typeof parsed.onboarded === "boolean" ? parsed.onboarded : true,
-    name: typeof parsed.name === "string" ? parsed.name.slice(0, 48) : defaults.name ?? "",
-    handle: typeof parsed.handle === "string" ? parsed.handle.slice(0, 40) : defaults.handle ?? "",
+    name: typeof parsed.name === "string" ? parsed.name.slice(0, 48) : (defaults.name ?? ""),
+    handle:
+      typeof parsed.handle === "string"
+        ? parsed.handle.slice(0, 40)
+        : (defaults.handle ?? ""),
     xp: boundedNumber(parsed.xp, (defaults.xp as number) ?? 0),
     streak: boundedNumber(parsed.streak, (defaults.streak as number) ?? 0, 100_000),
     bestStreak: boundedNumber(parsed.bestStreak, (defaults.bestStreak as number) ?? 0, 100_000),
@@ -305,7 +302,10 @@ export function normaliseProgressBackup<T extends object>(
     episodes: progressMap(parsed.episodes, now),
     history: historyList(parsed.history),
     completedQuests: questResults(parsed.completedQuests),
-    unlockedSkills: boundedStrings(parsed.unlockedSkills, (defaults.unlockedSkills as string[]) ?? []),
+    unlockedSkills: boundedStrings(
+      parsed.unlockedSkills,
+      (defaults.unlockedSkills as string[]) ?? [],
+    ),
     achievements,
     claimedGoals: boundedStrings(
       parsed.claimedGoals,
@@ -314,12 +314,7 @@ export function normaliseProgressBackup<T extends object>(
       10,
     ),
     interests,
-    ambitions: boundedStrings(
-      parsed.ambitions,
-      (defaults.ambitions as string[]) ?? [],
-      100,
-      120,
-    ),
+    ambitions: boundedStrings(parsed.ambitions, (defaults.ambitions as string[]) ?? [], 100, 120),
     memory: memoryMap(parsed.memory),
     reviewLog: reviewLog(parsed.reviewLog),
     reviewXpByDay: dateNumberMap(parsed.reviewXpByDay),
