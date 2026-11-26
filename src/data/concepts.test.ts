@@ -6,7 +6,9 @@ import { SERIES } from "./series";
 
 const conceptIds = new Set(CONCEPTS.map((concept) => concept.id));
 const cardIds = new Set(FEED.map((card) => card.id));
-const episodeIds = new Set(SERIES.flatMap((series) => series.episodes.map((episode) => episode.id)));
+const episodeIds = new Set(
+  SERIES.flatMap((series) => series.episodes.map((episode) => episode.id)),
+);
 const questIds = new Set(QUESTS.map((quest) => quest.id));
 
 describe("knowledge graph integrity", () => {
