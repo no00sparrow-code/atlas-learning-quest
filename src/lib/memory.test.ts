@@ -6,6 +6,7 @@ import {
   gradeReview,
   masteredConcepts,
   masteryLevel,
+  nextConceptsToLearn,
   prerequisitesMet,
   retentionRate,
   weakConcepts,
@@ -101,6 +102,26 @@ describe("memory engine", () => {
     expect(queue.length).toBeGreaterThan(0);
     expect(queue[0]?.reason).toBe("New concept");
     expect(queue.every((entry) => entry.question.explanation.length > 10)).toBe(true);
+  });
+
+  it("recommends prerequisite-ready concepts across different subjects", () => {
+    const next = nextConceptsToLearn({}, 3);
+
+    expect(next).toHaveLength(3);
+    expect(new Set(next.map((concept) => concept.category)).size).toBe(3);
+    expect(next.every((concept) => prerequisitesMet(concept, {}))).toBe(true);
+  });
+
+  it("prioritises an explicit interest without trapping the pathway in one subject", () => {
+    const next = nextConceptsToLearn({}, 3, ["technology"]);
+
+    expect(next[0]?.category).toBe("technology");
+    expect(new Set(next.map((concept) => concept.category)).size).toBe(3);
+  });
+
+  it("handles zero and negative recommendation limits safely", () => {
+    expect(nextConceptsToLearn({}, 0)).toEqual([]);
+    expect(nextConceptsToLearn({}, -3)).toEqual([]);
   });
 
   it("requires familiar prerequisites before unlocking a concept", () => {
