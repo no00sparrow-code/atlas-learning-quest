@@ -30,7 +30,7 @@ been verified.
 | Default branch | `main` |
 | Development branch | `codex/atlas-foundation-sprint-1` |
 | Dependency baseline | The original lockfile was out of sync with `package.json` (AJV and transitive dependencies). It was regenerated from the manifest on the development branch; clean `npm ci` now succeeds. |
-| Verification | GitHub Actions run [45837657513](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45837657513) passed: 19 test files / 93 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
+| Verification | GitHub Actions run [45838392077](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45838392077) passed: 19 test files / 96 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
 
 Do not infer a successful test or build from the existence of a test file or CI
 workflow. Record the exact workflow run and step result when available.
@@ -41,7 +41,7 @@ workflow. Record the exact workflow run and step result when available.
 |---|---|---|---|---|
 | Discover feed | PARTIAL | Feed data and local ranking in `src/data/cards.ts`, `src/lib/recommend.ts`, feed routes | Search/follow/collections and broader personalisation need verification and completion | 2 |
 | Deep-dive series | PARTIAL | `src/data/series.ts` and series/watch routes | Real episode media must exist before playable status is claimed | 2 |
-| Knowledge map | PARTIAL | Concepts, skills, categories and map route | Full prerequisite graph exploration and mastery-driven pathway experience | 2 |
+| Knowledge map | PARTIAL | Prerequisite-aware concept graph, mastery states and interest-aware subject-diverse next-concept recommendations | Deeper pathway sequencing, practical application and richer mastery evidence | 2 |
 | Quests and quizzes | PARTIAL | `src/data/quests.ts`, quest routes and progression store | Practical challenges, mystery content and progression need broader tests | 2 |
 | XP, levels and achievements | PARTIAL | `src/lib/progression.ts`, `src/data/achievements.ts`, `src/lib/atlas-store.tsx` | Expand Atlas Man attributes, Knowledge Points and collaborative progression | 2/6 |
 | Spaced repetition | PARTIAL | `src/lib/memory.ts`, review questions and review route | Validate broader learning outcomes and queue behaviour | 2 |
@@ -84,6 +84,7 @@ Files changed on the development branch:
 - `src/lib/progress-backup.ts`
 - `src/lib/progress-backup.test.ts`
 - `src/data/concepts.test.ts` (knowledge graph and content-link integrity)
+- `src/lib/memory.ts`, `src/lib/memory.test.ts` and `src/routes/map.tsx` (interest-aware, subject-diverse next concepts)
 - `src/lib/atlas-store.tsx`
 - `src/components/atlas/DataControls.tsx` and `src/components/atlas/DataControls.test.tsx`
 - `package-lock.json` (regenerated from the existing manifest; no dependency was intentionally added)
