@@ -235,9 +235,11 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
-as $$
-  select exists (select 1 from public.platform_admins where user_id = auth.uid());
+set search_path = ''
+as $
+  select exists (
+    select 1 from public.platform_admins where user_id = auth.uid()
+  );
 $$;
 
 revoke all on function public.is_owner() from public;
@@ -280,6 +282,10 @@ create index if not exists purchases_buyer_idx on public.purchases(buyer_id);
 create index if not exists purchases_product_idx on public.purchases(product_id);
 create index if not exists moderation_reports_status_idx on public.moderation_reports(status);
 create index if not exists health_checks_checked_at_idx on public.health_checks(checked_at desc);
+
+drop trigger if exists creator_profiles_touch on public.creator_profiles;
+create trigger creator_profiles_touch before update on public.creator_profiles
+for each row execute function public.touch_updated_at();
 
 drop trigger if exists profiles_touch on public.profiles;
 create trigger profiles_touch before update on public.profiles
@@ -366,10 +372,25 @@ drop policy if exists creator_profiles_own_write on public.creator_profiles;
 create policy creator_profiles_own_write on public.creator_profiles
 for insert with check (auth.uid() = user_id and status = 'pending');
 
+-- Creators may edit their own profile, but cannot change their approval state.
+-- Separate policies require the old and new row to remain in the same state.
 drop policy if exists creator_profiles_own_update on public.creator_profiles;
-create policy creator_profiles_own_update on public.creator_profiles
-for update using (auth.uid() = user_id or public.is_owner())
-with check (auth.uid() = user_id or public.is_owner());
+drop policy if exists creator_profiles_pending_update on public.creator_profiles;
+create policy creator_profiles_pending_update on public.creator_profiles
+for update
+using (auth.uid() = user_id and status = 'pending')
+with check (auth.uid() = user_id and status = 'pending');
+
+drop policy if exists creator_profiles_approved_update on public.creator_profiles;
+create policy creator_profiles_approved_update on public.creator_profiles
+for update
+using (auth.uid() = user_id and status = 'approved')
+with check (auth.uid() = user_id and status = 'approved');
+
+-- Only a platform owner can change approval status or update suspended profiles.
+drop policy if exists creator_profiles_owner_update on public.creator_profiles;
+create policy creator_profiles_owner_update on public.creator_profiles
+for update using (public.is_owner()) with check (public.is_owner());
 
 -- Content: published rows are public; owners can manage everything.
 drop policy if exists content_items_public_read on public.content_items;
