@@ -154,6 +154,30 @@ describe("progress backup validation", () => {
     expect(restoreProgressBackup(null, base, TODAY).recovery).toBeNull();
   });
 
+  it("round-trips bounded practical challenge responses", () => {
+    const unsafeResponses = Object.fromEntries([
+      ["__proto__", { text: "unsafe", updatedAt: 1 }],
+    ]);
+    const state = normaliseProgressBackup(
+      {
+        version: 2,
+        challengeResponses: {
+          "field-test": { text: "A useful real-world explanation.", updatedAt: 123 },
+          blank: { text: "   ", updatedAt: 2 },
+          malformed: { text: 42, updatedAt: 3 },
+          ...unsafeResponses,
+        },
+      },
+      createFreshState(),
+      TODAY,
+      456,
+    );
+
+    expect(state?.challengeResponses).toEqual({
+      "field-test": { text: "A useful real-world explanation.", updatedAt: 123 },
+    });
+  });
+
   it("rejects impossible calendar dates in review schedules", () => {
     const state = normaliseProgressBackup(
       {
