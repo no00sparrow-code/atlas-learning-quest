@@ -239,11 +239,7 @@ export function normaliseProgressBackup<T extends object>(
 ): T | null {
   const parsed = record(value);
   if (!parsed) return null;
-  if (
-    parsed["version"] !== undefined &&
-    parsed["version"] !== 1 &&
-    parsed["version"] !== 2
-  ) {
+  if (parsed["version"] !== undefined && parsed["version"] !== 1 && parsed["version"] !== 2) {
     return null;
   }
   if (parsed["version"] === undefined && !("xp" in parsed || "watched" in parsed)) return null;
@@ -294,9 +290,7 @@ export function normaliseProgressBackup<T extends object>(
     version: 2,
     onboarded: typeof parsed["onboarded"] === "boolean" ? parsed["onboarded"] : true,
     name:
-      typeof parsed["name"] === "string"
-        ? parsed["name"].slice(0, 48)
-        : (defaults["name"] ?? ""),
+      typeof parsed["name"] === "string" ? parsed["name"].slice(0, 48) : (defaults["name"] ?? ""),
     handle:
       typeof parsed["handle"] === "string"
         ? parsed["handle"].slice(0, 40)
