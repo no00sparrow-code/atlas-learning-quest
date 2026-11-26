@@ -40,9 +40,9 @@ These controls improve local data integrity; they do not create cloud account is
 
 ## Specific SQL review finding
 
-The reference schema's `creator_profiles_own_update` policy allows a creator to update their own row but does not visibly restrict sensitive status fields. A creator must not be able to approve themselves or change protected moderation state.
+The broad creator self-update policy has been replaced in the reference schema with separate pending and approved self-update policies that require the row to remain in the same status, plus an owner-only update policy. The creator-profile `updated_at` trigger is also present, and the `is_owner()` helper uses an empty search path with schema-qualified references.
 
-Do not apply `docs/backend/schema.sql` until this policy is corrected and reviewed through Lovable Cloud. This is a risk in a prepared reference schema, not a claim of an active production vulnerability.
+This corrects the identified self-approval path in the draft SQL, but the schema remains unapplied. Review it and run two-account RLS tests in the owner-controlled Lovable Cloud project before activation. This was a risk in the prepared reference schema, not an active production vulnerability.
 
 ## Mandatory backend rules
 
