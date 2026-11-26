@@ -27,14 +27,14 @@ npm run build
 npm run preview
 ```
 
-The GitHub Actions workflow `.github/workflows/ci.yml` runs:
+The GitHub Actions workflow `.github/workflows/ci.yml` uses read-only repository permissions
+and runs:
 
-1. Lockfile reconciliation on development branches.
-2. Clean dependency installation with `npm ci`.
-3. Vitest.
-4. ESLint.
-5. TypeScript checking.
-6. Production build.
+1. Clean dependency installation with `npm ci`.
+2. Vitest.
+3. ESLint.
+4. TypeScript checking.
+5. Production build.
 
 The lockfile was repaired on the development branch after CI exposed a mismatch with `package.json`. Do not replace `npm ci` with an unreviewed dependency update as a permanent workaround.
 
