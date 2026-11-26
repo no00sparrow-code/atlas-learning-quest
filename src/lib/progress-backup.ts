@@ -286,7 +286,8 @@ export function normaliseProgressBackup<T extends object>(
     version: 2,
     onboarded: typeof parsed.onboarded === "boolean" ? parsed.onboarded : true,
     name: typeof parsed.name === "string" ? parsed.name.slice(0, 48) : (defaults.name ?? ""),
-    handle: typeof parsed.handle === "string" ? parsed.handle.slice(0, 40) : (defaults.handle ?? ""),
+    handle:
+      typeof parsed.handle === "string" ? parsed.handle.slice(0, 40) : (defaults.handle ?? ""),
     xp: boundedNumber(parsed.xp, (defaults.xp as number) ?? 0),
     streak: boundedNumber(parsed.streak, (defaults.streak as number) ?? 0, 100_000),
     bestStreak: boundedNumber(parsed.bestStreak, (defaults.bestStreak as number) ?? 0, 100_000),
