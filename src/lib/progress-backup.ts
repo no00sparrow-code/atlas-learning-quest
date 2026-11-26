@@ -239,7 +239,13 @@ export function normaliseProgressBackup<T extends object>(
 ): T | null {
   const parsed = record(value);
   if (!parsed) return null;
-  if (parsed["version"] !== undefined && parsed["version"] !== 1 && parsed["version"] !== 2) return null;
+  if (
+    parsed["version"] !== undefined &&
+    parsed["version"] !== 1 &&
+    parsed["version"] !== 2
+  ) {
+    return null;
+  }
   if (parsed["version"] === undefined && !("xp" in parsed || "watched" in parsed)) return null;
   if (!isDateKey(today)) return null;
 
@@ -285,12 +291,21 @@ export function normaliseProgressBackup<T extends object>(
     ...defaults,
     version: 2,
     onboarded: typeof parsed["onboarded"] === "boolean" ? parsed["onboarded"] : true,
-    name: typeof parsed["name"] === "string" ? parsed["name"].slice(0, 48) : (defaults["name"] ?? ""),
+    name:
+      typeof parsed["name"] === "string"
+        ? parsed["name"].slice(0, 48)
+        : (defaults["name"] ?? ""),
     handle:
-      typeof parsed["handle"] === "string" ? parsed["handle"].slice(0, 40) : (defaults["handle"] ?? ""),
+      typeof parsed["handle"] === "string"
+        ? parsed["handle"].slice(0, 40)
+        : (defaults["handle"] ?? ""),
     xp: boundedNumber(parsed["xp"], (defaults["xp"] as number) ?? 0),
     streak: boundedNumber(parsed["streak"], (defaults["streak"] as number) ?? 0, 100_000),
-    bestStreak: boundedNumber(parsed["bestStreak"], (defaults["bestStreak"] as number) ?? 0, 100_000),
+    bestStreak: boundedNumber(
+      parsed["bestStreak"],
+      (defaults["bestStreak"] as number) ?? 0,
+      100_000,
+    ),
     lastActiveDay: isDateKey(parsed["lastActiveDay"]) ? parsed["lastActiveDay"] : "",
     xpByDay,
     watched,
@@ -312,7 +327,12 @@ export function normaliseProgressBackup<T extends object>(
       10,
     ),
     interests,
-    ambitions: boundedStrings(parsed["ambitions"], (defaults["ambitions"] as string[]) ?? [], 100, 120),
+    ambitions: boundedStrings(
+      parsed["ambitions"],
+      (defaults["ambitions"] as string[]) ?? [],
+      100,
+      120,
+    ),
     memory: memoryMap(parsed["memory"]),
     reviewLog: reviewLog(parsed["reviewLog"]),
     reviewXpByDay: dateNumberMap(parsed["reviewXpByDay"]),
