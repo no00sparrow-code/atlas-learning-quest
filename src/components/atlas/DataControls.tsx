@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
  * There is no fake "sign in" here: accounts need a configured backend.
  */
 export function DataControls() {
-  const { state, importProgress, updateProfile, recoveryBackup, clearRecoveryBackup } =
-    useAtlas();
+  const { state, importProgress, updateProfile, recoveryBackup, clearRecoveryBackup } = useAtlas();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(state.name);
   const [handle, setHandle] = useState(state.handle);
