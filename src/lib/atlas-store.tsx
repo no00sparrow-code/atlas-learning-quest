@@ -11,7 +11,7 @@ import {
 import type { CategoryId } from "@/data/categories";
 import { CATEGORIES } from "@/data/categories";
 import { SKILLS } from "@/data/skills";
-import { getQuest } from "@/data/quests";
+import { buildChallengeResponse } from "./challenge-responses";
 import { evaluateAchievements } from "@/data/achievements";
 import { getEpisode, episodeXp } from "@/data/series";
 import {
@@ -513,17 +513,11 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveChallengeResponse = useCallback((id: string, text: string): boolean => {
-    const quest = getQuest(id);
-    const clean = text.trim().slice(0, 5_000);
-    if (quest?.type !== "challenge" || quest.mode !== "write" || clean.length < (quest.minChars ?? 80)) {
-      return false;
-    }
+    const response = buildChallengeResponse(id, text);
+    if (!response) return false;
     setState((prev) => ({
       ...prev,
-      challengeResponses: {
-        ...prev.challengeResponses,
-        [id]: { text: clean, updatedAt: Date.now() },
-      },
+      challengeResponses: { ...prev.challengeResponses, [id]: response },
     }));
     return true;
   }, []);
