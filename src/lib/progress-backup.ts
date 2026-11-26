@@ -84,16 +84,16 @@ function progressMap(
     if (
       !entry ||
       !safeKey(id) ||
-      typeof entry.position !== "number" ||
-      !Number.isFinite(entry.position) ||
-      typeof entry.completed !== "boolean"
+      typeof entry["position"] !== "number" ||
+      !Number.isFinite(entry["position"]) ||
+      typeof entry["completed"] !== "boolean"
     ) {
       continue;
     }
     result[id] = {
-      position: Math.max(0, Math.min(1, entry.position)),
-      completed: entry.completed,
-      updatedAt: boundedNumber(entry.updatedAt, now, Number.MAX_SAFE_INTEGER),
+      position: Math.max(0, Math.min(1, entry["position"])),
+      completed: entry["completed"],
+      updatedAt: boundedNumber(entry["updatedAt"], now, Number.MAX_SAFE_INTEGER),
     };
   }
   return result;
@@ -106,16 +106,16 @@ function historyList(value: unknown): Array<{ kind: "short" | "episode"; id: str
     const entry = record(item);
     if (
       !entry ||
-      (entry.kind !== "short" && entry.kind !== "episode") ||
-      typeof entry.id !== "string" ||
-      !entry.id ||
-      typeof entry.at !== "number" ||
-      !Number.isFinite(entry.at) ||
-      entry.at < 0
+      (entry["kind"] !== "short" && entry["kind"] !== "episode") ||
+      typeof entry["id"] !== "string" ||
+      !entry["id"] ||
+      typeof entry["at"] !== "number" ||
+      !Number.isFinite(entry["at"]) ||
+      entry["at"] < 0
     ) {
       return [];
     }
-    return [{ kind: entry.kind, id: entry.id.slice(0, 160), at: Math.floor(entry.at) }];
+    return [{ kind: entry["kind"], id: entry["id"].slice(0, 160), at: Math.floor(entry["at"]) }];
   });
 }
 
@@ -129,15 +129,15 @@ function questResults(value: unknown): Record<string, { xp: number; score?: stri
     if (
       !entry ||
       !safeKey(id) ||
-      typeof entry.xp !== "number" ||
-      !Number.isFinite(entry.xp) ||
-      entry.xp < 0
+      typeof entry["xp"] !== "number" ||
+      !Number.isFinite(entry["xp"]) ||
+      entry["xp"] < 0
     ) {
       continue;
     }
     result[id] = {
-      xp: boundedNumber(entry.xp),
-      ...(typeof entry.score === "string" ? { score: entry.score.slice(0, 40) } : {}),
+      xp: boundedNumber(entry["xp"]),
+      ...(typeof entry["score"] === "string" ? { score: entry["score"].slice(0, 40) } : {}),
     };
   }
   return result;
@@ -175,24 +175,24 @@ function memoryMap(value: unknown): Record<
     if (
       !entry ||
       !safeKey(id) ||
-      typeof entry.strength !== "number" ||
-      !Number.isFinite(entry.strength) ||
-      typeof entry.ease !== "number" ||
-      !Number.isFinite(entry.ease) ||
-      !isDateKey(entry.dueDay)
+      typeof entry["strength"] !== "number" ||
+      !Number.isFinite(entry["strength"]) ||
+      typeof entry["ease"] !== "number" ||
+      !Number.isFinite(entry["ease"]) ||
+      !isDateKey(entry["dueDay"])
     ) {
       continue;
     }
 
-    const attempts = boundedNumber(entry.attempts);
+    const attempts = boundedNumber(entry["attempts"]);
     result[id] = {
       attempts,
-      correct: Math.min(attempts, boundedNumber(entry.correct)),
-      strength: Math.max(0, Math.min(1, entry.strength)),
-      ease: Math.max(1.3, Math.min(2.8, entry.ease)),
-      interval: boundedNumber(entry.interval, 0, 120),
-      dueDay: entry.dueDay,
-      lastSeen: isDateKey(entry.lastSeen) ? entry.lastSeen : "",
+      correct: Math.min(attempts, boundedNumber(entry["correct"])),
+      strength: Math.max(0, Math.min(1, entry["strength"])),
+      ease: Math.max(1.3, Math.min(2.8, entry["ease"])),
+      interval: boundedNumber(entry["interval"], 0, 120),
+      dueDay: entry["dueDay"],
+      lastSeen: isDateKey(entry["lastSeen"]) ? entry["lastSeen"] : "",
     };
   }
   return result;
@@ -210,21 +210,21 @@ function reviewLog(value: unknown): Array<{
     const entry = record(item);
     if (
       !entry ||
-      typeof entry.at !== "number" ||
-      !Number.isFinite(entry.at) ||
-      entry.at < 0 ||
-      typeof entry.conceptId !== "string" ||
-      typeof entry.correct !== "boolean" ||
-      (entry.source !== "review" && entry.source !== "quiz")
+      typeof entry["at"] !== "number" ||
+      !Number.isFinite(entry["at"]) ||
+      entry["at"] < 0 ||
+      typeof entry["conceptId"] !== "string" ||
+      typeof entry["correct"] !== "boolean" ||
+      (entry["source"] !== "review" && entry["source"] !== "quiz")
     ) {
       return [];
     }
     return [
       {
-        at: Math.floor(entry.at),
-        conceptId: entry.conceptId.slice(0, 160),
-        correct: entry.correct,
-        source: entry.source,
+        at: Math.floor(entry["at"]),
+        conceptId: entry["conceptId"].slice(0, 160),
+        correct: entry["correct"],
+        source: entry["source"],
       },
     ];
   });
@@ -239,40 +239,40 @@ export function normaliseProgressBackup<T extends object>(
 ): T | null {
   const parsed = record(value);
   if (!parsed) return null;
-  if (parsed.version !== undefined && parsed.version !== 1 && parsed.version !== 2) return null;
-  if (parsed.version === undefined && !("xp" in parsed || "watched" in parsed)) return null;
+  if (parsed["version"] !== undefined && parsed["version"] !== 1 && parsed["version"] !== 2) return null;
+  if (parsed["version"] === undefined && !("xp" in parsed || "watched" in parsed)) return null;
   if (!isDateKey(today)) return null;
 
   const defaults = base as JsonRecord;
-  const watched = boundedStrings(parsed.watched, (defaults.watched as string[]) ?? []);
-  const shorts = progressMap(parsed.shorts, now);
-  if (parsed.shorts == null) {
+  const watched = boundedStrings(parsed["watched"], (defaults["watched"] as string[]) ?? []);
+  const shorts = progressMap(parsed["shorts"], now);
+  if (parsed["shorts"] == null) {
     for (const id of watched) {
       shorts[id] = { position: 1, completed: true, updatedAt: now };
     }
   }
 
-  const interests = Array.isArray(parsed.interests)
+  const interests = Array.isArray(parsed["interests"])
     ? [
         ...new Set(
-          parsed.interests.filter(
+          parsed["interests"].filter(
             (item): item is string => typeof item === "string" && CATEGORY_IDS.has(item),
           ),
         ),
       ].slice(0, CATEGORY_IDS.size)
-    : ((defaults.interests as string[]) ?? []);
+    : ((defaults["interests"] as string[]) ?? []);
 
-  const xpByDay = dateNumberMap(parsed.xpByDay);
-  if (parsed.xpByDay == null) {
+  const xpByDay = dateNumberMap(parsed["xpByDay"]);
+  if (parsed["xpByDay"] == null) {
     const oldToday =
-      typeof parsed.xpToday === "number" && Number.isFinite(parsed.xpToday)
-        ? boundedNumber(parsed.xpToday)
+      typeof parsed["xpToday"] === "number" && Number.isFinite(parsed["xpToday"])
+        ? boundedNumber(parsed["xpToday"])
         : 0;
     if (oldToday > 0) xpByDay[today] = oldToday;
   }
 
   const achievements: Record<string, number> = {};
-  const achievementSource = record(parsed.achievements);
+  const achievementSource = record(parsed["achievements"]);
   if (achievementSource) {
     for (const [id, at] of Object.entries(achievementSource).slice(0, MAX_ITEMS)) {
       if (safeKey(id) && typeof at === "number" && Number.isFinite(at) && at >= 0) {
@@ -284,38 +284,38 @@ export function normaliseProgressBackup<T extends object>(
   return {
     ...defaults,
     version: 2,
-    onboarded: typeof parsed.onboarded === "boolean" ? parsed.onboarded : true,
-    name: typeof parsed.name === "string" ? parsed.name.slice(0, 48) : (defaults.name ?? ""),
+    onboarded: typeof parsed["onboarded"] === "boolean" ? parsed["onboarded"] : true,
+    name: typeof parsed["name"] === "string" ? parsed["name"].slice(0, 48) : (defaults["name"] ?? ""),
     handle:
-      typeof parsed.handle === "string" ? parsed.handle.slice(0, 40) : (defaults.handle ?? ""),
-    xp: boundedNumber(parsed.xp, (defaults.xp as number) ?? 0),
-    streak: boundedNumber(parsed.streak, (defaults.streak as number) ?? 0, 100_000),
-    bestStreak: boundedNumber(parsed.bestStreak, (defaults.bestStreak as number) ?? 0, 100_000),
-    lastActiveDay: isDateKey(parsed.lastActiveDay) ? parsed.lastActiveDay : "",
+      typeof parsed["handle"] === "string" ? parsed["handle"].slice(0, 40) : (defaults["handle"] ?? ""),
+    xp: boundedNumber(parsed["xp"], (defaults["xp"] as number) ?? 0),
+    streak: boundedNumber(parsed["streak"], (defaults["streak"] as number) ?? 0, 100_000),
+    bestStreak: boundedNumber(parsed["bestStreak"], (defaults["bestStreak"] as number) ?? 0, 100_000),
+    lastActiveDay: isDateKey(parsed["lastActiveDay"]) ? parsed["lastActiveDay"] : "",
     xpByDay,
     watched,
-    liked: boundedStrings(parsed.liked, (defaults.liked as string[]) ?? []),
-    saved: boundedStrings(parsed.saved, (defaults.saved as string[]) ?? []),
+    liked: boundedStrings(parsed["liked"], (defaults["liked"] as string[]) ?? []),
+    saved: boundedStrings(parsed["saved"], (defaults["saved"] as string[]) ?? []),
     shorts,
-    episodes: progressMap(parsed.episodes, now),
-    history: historyList(parsed.history),
-    completedQuests: questResults(parsed.completedQuests),
+    episodes: progressMap(parsed["episodes"], now),
+    history: historyList(parsed["history"]),
+    completedQuests: questResults(parsed["completedQuests"]),
     unlockedSkills: boundedStrings(
-      parsed.unlockedSkills,
-      (defaults.unlockedSkills as string[]) ?? [],
+      parsed["unlockedSkills"],
+      (defaults["unlockedSkills"] as string[]) ?? [],
     ),
     achievements,
     claimedGoals: boundedStrings(
-      parsed.claimedGoals,
-      (defaults.claimedGoals as string[]) ?? [],
+      parsed["claimedGoals"],
+      (defaults["claimedGoals"] as string[]) ?? [],
       5_000,
       10,
     ),
     interests,
-    ambitions: boundedStrings(parsed.ambitions, (defaults.ambitions as string[]) ?? [], 100, 120),
-    memory: memoryMap(parsed.memory),
-    reviewLog: reviewLog(parsed.reviewLog),
-    reviewXpByDay: dateNumberMap(parsed.reviewXpByDay),
+    ambitions: boundedStrings(parsed["ambitions"], (defaults["ambitions"] as string[]) ?? [], 100, 120),
+    memory: memoryMap(parsed["memory"]),
+    reviewLog: reviewLog(parsed["reviewLog"]),
+    reviewXpByDay: dateNumberMap(parsed["reviewXpByDay"]),
   } as T;
 }
 
