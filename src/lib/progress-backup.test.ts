@@ -155,9 +155,7 @@ describe("progress backup validation", () => {
   });
 
   it("round-trips bounded practical challenge responses", () => {
-    const unsafeResponses = Object.fromEntries([
-      ["__proto__", { text: "unsafe", updatedAt: 1 }],
-    ]);
+    const unsafeResponses = Object.fromEntries([["__proto__", { text: "unsafe", updatedAt: 1 }]]);
     const state = normaliseProgressBackup(
       {
         version: 2,
