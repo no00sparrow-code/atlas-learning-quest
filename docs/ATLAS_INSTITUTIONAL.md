@@ -4,7 +4,7 @@ Last reviewed: 26 November 2026
 
 ## Status
 
-<badge>NOT IMPLEMENTED</badge>
+**Status: NOT IMPLEMENTED**
 
 The repository currently has no functioning institutional tenant, teacher account, classroom, assignment, reporting or institutional administration system. The reference backend schema and the Master Development Directive describe future requirements; they are not evidence that these features exist.
 
