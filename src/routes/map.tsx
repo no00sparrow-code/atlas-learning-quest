@@ -74,7 +74,10 @@ function KnowledgeMap() {
   const selected = selectedId ? getConcept(selectedId) : undefined;
 
   const mastered = useMemo(() => masteredConcepts(state.memory), [state.memory]);
-  const next = useMemo(() => nextConceptsToLearn(state.memory, 3), [state.memory]);
+  const next = useMemo(
+    () => nextConceptsToLearn(state.memory, 3, state.interests),
+    [state.memory, state.interests],
+  );
   const retention = Math.round(retentionRate(state.memory) * 100);
   const due = Object.values(state.memory).filter(
     (memory) => memory.attempts > 0 && memory.dueDay <= today,

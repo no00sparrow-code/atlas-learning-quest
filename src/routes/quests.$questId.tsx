@@ -392,8 +392,9 @@ function ChallengeRunner({
   onProgress: (p: number) => void;
   onFinish: (o: Outcome) => void;
 }) {
-  const { state } = useAtlas();
-  const [text, setText] = useState("");
+  const { state, saveChallengeResponse } = useAtlas();
+  const savedResponse = state.challengeResponses[quest.id]?.text ?? "";
+  const [text, setText] = useState(savedResponse);
   const min = quest.minChars ?? 80;
   const target = quest.watchTarget ?? 3;
   const watched = state.watched.length;
@@ -401,6 +402,7 @@ function ChallengeRunner({
     quest.mode === "write" ? Math.min(1, text.trim().length / min) : Math.min(1, watched / target);
 
   useEffect(() => onProgress(p * 0.9), [p, onProgress]);
+  useEffect(() => setText(savedResponse), [quest.id, savedResponse]);
 
   return (
     <div className="space-y-4">
@@ -418,6 +420,12 @@ function ChallengeRunner({
             placeholder="e.g. A neutron star is what's left when a giant star collapses. It squeezes so hard that…"
             className="rounded-2xl border-2 border-border bg-card p-4 text-[15px] focus-visible:ring-0 focus-visible:border-cat"
           />
+          {savedResponse && (
+            <p className="text-[11px] text-muted-foreground">
+              Your last submitted explanation is saved on this device. You can edit and submit it
+              again.
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <XpBar progress={p} tone="cat" size="sm" />
             <span className="w-16 text-right text-xs font-semibold tabular-nums text-muted-foreground">
@@ -429,15 +437,16 @@ function ChallengeRunner({
             size="xl"
             className="w-full"
             disabled={p < 1}
-            onClick={() =>
+            onClick={() => {
+              if (!saveChallengeResponse(quest.id, text)) return;
               onFinish({
                 xp: quest.reward,
                 score: "Explained",
                 title: "Knowledge locked in",
                 message: "Explaining an idea simply is one of the strongest ways to remember it.",
                 success: true,
-              })
-            }
+              });
+            }}
           >
             Submit explanation
           </Button>

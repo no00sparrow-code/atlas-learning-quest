@@ -132,12 +132,41 @@ export function prerequisitesMet(concept: Concept, memory: Record<string, Concep
   });
 }
 
-export function nextConceptsToLearn(memory: Record<string, ConceptMemory>, limit = 3): Concept[] {
-  return CONCEPTS.filter(
-    (concept) => masteryLevel(memory[concept.id]) === "unseen" && prerequisitesMet(concept, memory),
-  )
-    .sort((a, b) => a.difficulty - b.difficulty)
-    .slice(0, limit);
+export function nextConceptsToLearn(
+  memory: Record<string, ConceptMemory>,
+  limit = 3,
+  interests: readonly CategoryId[] = [],
+): Concept[] {
+  const count = Math.max(0, Math.floor(limit));
+  if (count === 0) return [];
+
+  const interestSet = new Set(interests);
+  const candidates = CONCEPTS.map((concept, index) => ({ concept, index }))
+    .filter(
+      ({ concept }) =>
+        masteryLevel(memory[concept.id]) === "unseen" && prerequisitesMet(concept, memory),
+    )
+    .sort((a, b) => {
+      const interestRank =
+        Number(interestSet.has(b.concept.category)) - Number(interestSet.has(a.concept.category));
+      return interestRank || a.concept.difficulty - b.concept.difficulty || a.index - b.index;
+    });
+
+  const selected: Concept[] = [];
+  const selectedCategories = new Set<CategoryId>();
+  for (const { concept } of candidates) {
+    if (selected.length >= count) break;
+    if (!selectedCategories.has(concept.category)) {
+      selected.push(concept);
+      selectedCategories.add(concept.category);
+    }
+  }
+
+  for (const { concept } of candidates) {
+    if (selected.length >= count) break;
+    if (!selected.includes(concept)) selected.push(concept);
+  }
+  return selected;
 }
 
 export type ReviewReason = "Due for review" | "Needs repair" | "New concept" | "Focused practice";

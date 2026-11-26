@@ -11,6 +11,7 @@ import {
 import type { CategoryId } from "@/data/categories";
 import { CATEGORIES } from "@/data/categories";
 import { SKILLS } from "@/data/skills";
+import { buildChallengeResponse } from "./challenge-responses";
 import { evaluateAchievements } from "@/data/achievements";
 import { getEpisode, episodeXp } from "@/data/series";
 import {
@@ -20,6 +21,7 @@ import {
   XP_PER_NODE,
   type LevelInfo,
 } from "./progression";
+import { restoreProgressBackup, parseProgressBackup } from "./progress-backup";
 import {
   buildSnapshot,
   DAILY_GOAL_BONUS,
@@ -36,6 +38,7 @@ import {
 } from "./memory";
 
 const STORAGE_KEY = "atlas-progress-v2";
+const RECOVERY_KEY = "atlas-progress-recovery";
 const LEGACY_KEY = "atlas-progress-v1";
 
 export type ContentKind = "short" | "episode";
@@ -84,6 +87,7 @@ export interface AtlasState {
   episodes: Record<string, VideoProgress>;
   history: HistoryEntry[];
   completedQuests: Record<string, QuestResult>;
+  challengeResponses: Record<string, { text: string; updatedAt: number }>;
   unlockedSkills: string[];
   achievements: Record<string, number>;
   claimedGoals: string[];
@@ -117,6 +121,7 @@ export function createFreshState(): AtlasState {
     episodes: {},
     history: [],
     completedQuests: {},
+    challengeResponses: {},
     unlockedSkills: [],
     achievements: {},
     claimedGoals: [],
@@ -171,6 +176,7 @@ export function createDemoState(): AtlasState {
       { kind: "short", id: "gps-einstein", at: now - 1 * DAY },
     ],
     completedQuests: { "mind-tricks": { xp: 60, score: "3/3" } },
+    challengeResponses: {},
     unlockedSkills: ["psy-1", "sci-1", "tec-1"],
     achievements: {},
     claimedGoals: [],
@@ -238,6 +244,8 @@ export interface XpEvent {
 interface AtlasContextValue {
   state: AtlasState;
   hydrated: boolean;
+  recoveryBackup: string | null;
+  clearRecoveryBackup: () => void;
   level: LevelInfo;
   skillPoints: number;
   today: string;
@@ -258,6 +266,7 @@ interface AtlasContextValue {
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
   completeQuest: (id: string, xp: number, score?: string) => void;
+  saveChallengeResponse: (id: string, text: string) => boolean;
   unlockSkill: (id: string) => { ok: boolean; reason?: string };
   canUnlockSkill: (id: string) => { ok: boolean; reason?: string };
   toggleInterest: (id: CategoryId) => void;
@@ -299,48 +308,18 @@ export function withXp(state: AtlasState, amount: number, today: string = dayKey
   };
 }
 
-/** Merge stored state with defaults and migrate v1 (watched cards, no resume data). */
-function hydrate(raw: string | null, legacy: string | null): AtlasState {
-  const base = createFreshState();
-  const source = raw ?? legacy;
-  if (!source) return base;
-  try {
-    const parsed = JSON.parse(source) as Partial<AtlasState> & { xpToday?: number };
-    const today = dayKey();
-    const watched = Array.isArray(parsed.watched) ? parsed.watched : base.watched;
-    const shortsFromLegacy: Record<string, VideoProgress> = {};
-    if (!parsed.shorts) {
-      for (const id of watched) {
-        shortsFromLegacy[id] = { position: 1, completed: true, updatedAt: Date.now() };
-      }
-    }
-    return {
-      ...base,
-      ...parsed,
-      version: 2,
-      // Existing saved progress predates onboarding; do not send those users back through it.
-      onboarded: parsed.onboarded ?? true,
-      xpByDay: parsed.xpByDay ?? { ...base.xpByDay, [today]: parsed.xpToday ?? 0 },
-      shorts: parsed.shorts ?? { ...base.shorts, ...shortsFromLegacy },
-      episodes: parsed.episodes ?? base.episodes,
-      history: parsed.history ?? base.history,
-      achievements: parsed.achievements ?? {},
-      claimedGoals: parsed.claimedGoals ?? [],
-      memory: parsed.memory ?? {},
-      reviewLog: parsed.reviewLog ?? [],
-      reviewXpByDay: parsed.reviewXpByDay ?? {},
-      watched,
-      saved: parsed.saved ?? base.saved,
-      liked: parsed.liked ?? base.liked,
-    };
-  } catch {
-    return base;
-  }
+/** Validate stored state and migrate v1 (watched cards, no resume data). */
+function hydrate(
+  raw: string | null,
+  legacy: string | null,
+): { state: AtlasState; recovery: string | null; error: string | null } {
+  return restoreProgressBackup(raw, createFreshState(), dayKey(), Date.now(), legacy);
 }
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AtlasState>(createFreshState);
   const [hydrated, setHydrated] = useState(false);
+  const [recoveryBackup, setRecoveryBackup] = useState<string | null>(null);
   const [events, setEvents] = useState<XpEvent[]>([]);
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [achievementQueue, setAchievementQueue] = useState<string[]>([]);
@@ -354,7 +333,19 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const legacy = raw ? null : localStorage.getItem(LEGACY_KEY);
-      setState(hydrate(raw, legacy));
+      const restored = hydrate(raw, legacy);
+      setState(restored.state);
+      try {
+        const existingRecovery = localStorage.getItem(RECOVERY_KEY);
+        if (restored.recovery && !existingRecovery) {
+          localStorage.setItem(RECOVERY_KEY, restored.recovery);
+          setRecoveryBackup(restored.recovery);
+        } else {
+          setRecoveryBackup(existingRecovery);
+        }
+      } catch {
+        setRecoveryBackup(restored.recovery);
+      }
     } catch {
       /* storage unavailable: run from defaults */
     }
@@ -522,6 +513,16 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const saveChallengeResponse = useCallback((id: string, text: string): boolean => {
+    const response = buildChallengeResponse(id, text);
+    if (!response) return false;
+    setState((prev) => ({
+      ...prev,
+      challengeResponses: { ...prev.challengeResponses, [id]: response },
+    }));
+    return true;
+  }, []);
+
   const canUnlockSkill = useCallback(
     (id: string): { ok: boolean; reason?: string } => {
       const node = SKILLS.find((s) => s.id === id);
@@ -617,15 +618,18 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const importProgress = useCallback((raw: string) => {
+    const result = parseProgressBackup(raw, createFreshState(), dayKey());
+    if (!result.ok) return result;
+    setState(result.state);
+    return { ok: true };
+  }, []);
+
+  const clearRecoveryBackup = useCallback(() => {
     try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { ok: false, error: "That file is not an Atlas backup." };
-      }
-      setState(hydrate(JSON.stringify(parsed), null));
-      return { ok: true };
+      localStorage.removeItem(RECOVERY_KEY);
+      setRecoveryBackup(null);
     } catch {
-      return { ok: false, error: "Could not read that backup file." };
+      /* Keep the recovery copy visible when storage cannot remove it. */
     }
   }, []);
 
@@ -699,6 +703,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     toggleLike,
     toggleSave,
     completeQuest,
+    saveChallengeResponse,
     unlockSkill,
     canUnlockSkill,
     toggleInterest,
@@ -707,6 +712,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     recordReview,
     recordQuizAttempt,
     importProgress,
+    recoveryBackup,
+    clearRecoveryBackup,
     updateProfile,
     completeOnboarding,
     resetProgress,

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  * There is no fake "sign in" here: accounts need a configured backend.
  */
 export function DataControls() {
-  const { state, importProgress, updateProfile } = useAtlas();
+  const { state, importProgress, updateProfile, recoveryBackup, clearRecoveryBackup } = useAtlas();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(state.name);
   const [handle, setHandle] = useState(state.handle);
@@ -31,6 +31,22 @@ export function DataControls() {
       toast.success("Backup downloaded");
     } catch {
       toast.error("Could not create the backup on this device");
+    }
+  };
+
+  const exportRecovery = () => {
+    if (!recoveryBackup) return;
+    try {
+      const blob = new Blob([recoveryBackup], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `atlas-recovery-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success("Recovery copy downloaded");
+    } catch {
+      toast.error("Could not download the recovery copy");
     }
   };
 
@@ -72,6 +88,24 @@ export function DataControls() {
           />
         </div>
       </div>
+
+      {recoveryBackup && (
+        <div role="alert" className="rounded-2xl border border-warning/30 bg-warning/10 p-4">
+          <p className="text-sm font-bold">A previous progress file needs recovery</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Atlas could not safely read the previous local backup. The original file was kept
+            separately and has not been discarded. Download a copy before clearing it.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="glass" size="sm" onClick={exportRecovery}>
+              <Download /> Download recovery copy
+            </Button>
+            <Button variant="glass" size="sm" onClick={clearRecoveryBackup}>
+              Dismiss recovery copy
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-2xl bg-card p-4">
         <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
