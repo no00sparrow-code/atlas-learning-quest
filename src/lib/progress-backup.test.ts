@@ -131,6 +131,18 @@ describe("progress backup validation", () => {
     expect(Object.getPrototypeOf(state?.shorts)).toBe(Object.prototype);
   });
 
+  it("falls back to a valid legacy backup while preserving the rejected primary", () => {
+    const base = createFreshState();
+    const primary = '{"version":99,"xp":500}';
+    const legacy = JSON.stringify({ version: 1, xp: 80, watched: ["old-card"] });
+    const restored = restoreProgressBackup(primary, base, TODAY, 789, legacy);
+
+    expect(restored.state.xp).toBe(80);
+    expect(restored.state.shorts["old-card"].completed).toBe(true);
+    expect(restored.recovery).toBe(primary);
+    expect(restored.error).toBe("That file is not a supported Atlas backup.");
+  });
+
   it("keeps rejected local backups available for recovery", () => {
     const base = createFreshState();
     const raw = '{"version":99,"xp":500}';
