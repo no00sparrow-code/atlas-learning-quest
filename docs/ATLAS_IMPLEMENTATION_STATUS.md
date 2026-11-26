@@ -109,8 +109,8 @@ Fast Refresh warnings remain; there are no lint errors.
 
 ## Known security and architecture risks
 
-1. The reference schema now separates pending/approved creator self-updates and reserves
-   status changes for owners. The SQL remains unapplied and still requires live two-account
+1. The reference schema now guards creator status changes with a server-side trigger that
+   permits only platform owners. The SQL remains unapplied and requires live two-account
    RLS verification through Lovable Cloud before activation.
 2. Browser-local quotas are bypassable and are not financial controls.
 3. Client-only identity or hidden admin routes must never be used as authorisation.
