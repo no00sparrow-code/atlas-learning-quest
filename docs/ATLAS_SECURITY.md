@@ -33,14 +33,14 @@ These controls improve local data integrity; they do not create cloud account is
 | Browser-local AI quotas | Can be reset or manipulated | Server-side user/global/provider quotas |
 | External local-model URL | A non-loopback endpoint receives prompts | Explicit disclosure, endpoint validation and privacy controls |
 | No server sync | No cross-device isolation | RLS, sync adapter and two-account tests |
-| Prepared SQL policy | Creator status changes now have a server-side owner-only trigger in reference SQL; schema remains unapplied | Review trigger and verify two-account RLS behaviour before activation |
+| Prepared SQL policy | Creator status changes now have a server-side owner/service-role trigger in reference SQL; schema remains unapplied | Review trigger and verify two-account RLS behaviour before activation |
 | No admin backend | UI-only route would not secure operations | Authenticated owner server function and audit log |
 | No payment integration | Commerce types are not payment security | Signed webhook verification, idempotency and server entitlements |
 | No social backend | No private messaging or guild access control | RLS, block/report/moderation and membership tests |
 
 ## Specific SQL review finding
 
-The reference schema retains row-scoped creator self-updates but now has a security-definer `BEFORE UPDATE` trigger that rejects any creator approval-status change unless `public.is_owner()` is true. The trigger uses an empty search path, and the owner helper uses schema-qualified references. The creator-profile `updated_at` trigger is also present.
+The reference schema retains row-scoped creator self-updates but now has a security-definer `BEFORE UPDATE` trigger that rejects any creator approval-status change unless the request is from a platform owner or a trusted `service_role` backend function. The trigger uses an empty search path, and the owner helper uses schema-qualified references. The creator-profile `updated_at` trigger is also present.
 
 This adds a server-side guard against self-approval in the draft SQL, but the schema remains unapplied and has not been executed against a Supabase project. Review the function and run two-account RLS tests in the owner-controlled Lovable Cloud project before activation. This was a risk in the prepared reference schema, not an active production vulnerability.
 
