@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CloudOff, Database, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useAtlas } from "@/lib/atlas-store";
+import { isAtlasBackup } from "@/lib/backup";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -35,10 +36,27 @@ export function DataControls() {
   };
 
   const importBackup = async (file: File) => {
-    const text = await file.text();
-    const result = importProgress(text);
-    if (result.ok) toast.success("Backup restored");
-    else toast.error(result.error ?? "Restore failed");
+    try {
+      const text = await file.text();
+      let payload: unknown;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        toast.error("This file is not valid JSON");
+        return;
+      }
+
+      if (!isAtlasBackup(payload)) {
+        toast.error("This file is not a valid Atlas backup");
+        return;
+      }
+
+      const result = importProgress(text);
+      if (result.ok) toast.success("Backup restored");
+      else toast.error(result.error ?? "Restore failed");
+    } catch {
+      toast.error("Could not read this backup file");
+    }
   };
 
   return (
