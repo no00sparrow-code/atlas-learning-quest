@@ -612,10 +612,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const clearRecoveryBackup = useCallback(() => {
     try {
       localStorage.removeItem(RECOVERY_KEY);
+      setRecoveryBackup(null);
     } catch {
-      /* storage unavailable */
+      /* Keep the recovery copy visible when storage cannot remove it. */
     }
-    setRecoveryBackup(null);
   }, []);
 
   const updateProfile = useCallback((name: string, handle: string) => {
