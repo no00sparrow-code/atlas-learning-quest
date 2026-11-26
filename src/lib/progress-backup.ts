@@ -143,6 +143,27 @@ function questResults(value: unknown): Record<string, { xp: number; score?: stri
   return result;
 }
 
+function challengeResponseMap(
+  value: unknown,
+  now: number,
+): Record<string, { text: string; updatedAt: number }> {
+  const source = record(value);
+  const result: Record<string, { text: string; updatedAt: number }> = {};
+  if (!source) return result;
+
+  for (const [id, item] of Object.entries(source).slice(0, 500)) {
+    const entry = record(item);
+    if (!entry || !safeKey(id) || typeof entry["text"] !== "string") continue;
+    const text = entry["text"].slice(0, 5_000);
+    if (!text.trim()) continue;
+    result[id] = {
+      text,
+      updatedAt: boundedNumber(entry["updatedAt"], now, Number.MAX_SAFE_INTEGER),
+    };
+  }
+  return result;
+}
+
 function memoryMap(value: unknown): Record<
   string,
   {
@@ -311,6 +332,7 @@ export function normaliseProgressBackup<T extends object>(
     episodes: progressMap(parsed["episodes"], now),
     history: historyList(parsed["history"]),
     completedQuests: questResults(parsed["completedQuests"]),
+    challengeResponses: challengeResponseMap(parsed["challengeResponses"], now),
     unlockedSkills: boundedStrings(
       parsed["unlockedSkills"],
       (defaults["unlockedSkills"] as string[]) ?? [],
