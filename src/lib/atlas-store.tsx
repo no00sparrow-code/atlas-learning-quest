@@ -20,7 +20,7 @@ import {
   XP_PER_NODE,
   type LevelInfo,
 } from "./progression";
-import { parseProgressBackup } from "./progress-backup";
+import { restoreProgressBackup, parseProgressBackup } from "./progress-backup";
 import {
   buildSnapshot,
   DAILY_GOAL_BONUS,
@@ -37,6 +37,7 @@ import {
 } from "./memory";
 
 const STORAGE_KEY = "atlas-progress-v2";
+const RECOVERY_KEY = "atlas-progress-recovery";
 const LEGACY_KEY = "atlas-progress-v1";
 
 export type ContentKind = "short" | "episode";
@@ -301,12 +302,11 @@ export function withXp(state: AtlasState, amount: number, today: string = dayKey
 }
 
 /** Validate stored state and migrate v1 (watched cards, no resume data). */
-function hydrate(raw: string | null, legacy: string | null): AtlasState {
-  const base = createFreshState();
-  const source = raw ?? legacy;
-  if (!source) return base;
-  const result = parseProgressBackup(source, base, dayKey());
-  return result.ok ? result.state : base;
+function hydrate(
+  raw: string | null,
+  legacy: string | null,
+): { state: AtlasState; recovery: string | null; error: string | null } {
+  return restoreProgressBackup(raw ?? legacy, createFreshState(), dayKey());
 }
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
@@ -325,7 +325,11 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const legacy = raw ? null : localStorage.getItem(LEGACY_KEY);
-      setState(hydrate(raw, legacy));
+      const restored = hydrate(raw, legacy);
+      setState(restored.state);
+      if (restored.recovery && !localStorage.getItem(RECOVERY_KEY)) {
+        localStorage.setItem(RECOVERY_KEY, restored.recovery);
+      }
     } catch {
       /* storage unavailable: run from defaults */
     }
