@@ -33,7 +33,7 @@ These controls improve local data integrity; they do not create cloud account is
 | Browser-local AI quotas | Can be reset or manipulated | Server-side user/global/provider quotas |
 | External local-model URL | A non-loopback endpoint receives prompts | Explicit disclosure, endpoint validation and privacy controls |
 | No server sync | No cross-device isolation | RLS, sync adapter and two-account tests |
-| Prepared SQL policy | Creator self-update rules are now state-preserving in the reference SQL; schema remains unapplied | Review and verify two-account RLS behaviour before activation |
+| Prepared SQL policy | Creator status changes now have a server-side owner-only trigger in reference SQL; schema remains unapplied | Review trigger and verify two-account RLS behaviour before activation |
 | No admin backend | UI-only route would not secure operations | Authenticated owner server function and audit log |
 | No payment integration | Commerce types are not payment security | Signed webhook verification, idempotency and server entitlements |
 | No social backend | No private messaging or guild access control | RLS, block/report/moderation and membership tests |
