@@ -35,12 +35,15 @@ describe("progress backup validation", () => {
       watched: ["first-lesson"],
       saved: ["second-lesson"],
       interests: ["science", "technology"],
-      shorts: { "first-lesson": { position: 1, completed: true, updatedAt: 100 } },
+      shorts: {
+        "first-lesson": { position: 1, completed: true, updatedAt: 100 },
+      },
     });
   });
 
-  it("rejects malformed, unsupported and oversized backups without producing state", () => {
+  it("rejects malformed, unsupported and oversized backups", () => {
     const base = createFreshState();
+
     expect(parseProgressBackup("{", base, TODAY).ok).toBe(false);
     expect(parseProgressBackup("[]", base, TODAY).ok).toBe(false);
     expect(parseProgressBackup('{"version":99,"xp":10}', base, TODAY).ok).toBe(false);
@@ -50,7 +53,7 @@ describe("progress backup validation", () => {
     });
   });
 
-  it("bounds progress, recall values and strings while dropping malformed entries", () => {
+  it("bounds progress and recall values while dropping malformed entries", () => {
     const base = createFreshState();
     const state = normaliseProgressBackup(
       {
@@ -121,7 +124,7 @@ describe("progress backup validation", () => {
     });
   });
 
-  it("rejects non-calendar date keys for review schedules", () => {
+  it("rejects impossible calendar dates in review schedules", () => {
     const state = normaliseProgressBackup(
       {
         version: 2,
