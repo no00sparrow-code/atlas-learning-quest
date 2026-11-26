@@ -254,7 +254,9 @@ export function normaliseProgressBackup<T extends object>(
   const shorts = progressMap(parsed["shorts"], now);
   if (parsed["shorts"] == null) {
     for (const id of watched) {
-      shorts[id] = { position: 1, completed: true, updatedAt: now };
+      if (safeKey(id)) {
+        shorts[id] = { position: 1, completed: true, updatedAt: now };
+      }
     }
   }
 
