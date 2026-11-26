@@ -30,7 +30,7 @@ been verified.
 | Default branch | `main` |
 | Development branch | `codex/atlas-foundation-sprint-1` |
 | Dependency baseline | The original lockfile was out of sync with `package.json` (AJV and transitive dependencies). It was regenerated from the manifest on the development branch; clean `npm ci` now succeeds. |
-| Verification | GitHub Actions run [45836566707](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45836566707) passed: 18 test files / 88 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
+| Verification | GitHub Actions run [45837657513](https://github.com/no00sparrow-code/atlas-learning-quest/actions/runs/45837657513) passed: 19 test files / 93 tests, ESLint, `npx tsc --noEmit`, and `npm run build`. ESLint retains 10 existing React Fast Refresh warnings outside this task. |
 
 Do not infer a successful test or build from the existence of a test file or CI
 workflow. Record the exact workflow run and step result when available.
@@ -83,6 +83,7 @@ Files changed on the development branch:
 
 - `src/lib/progress-backup.ts`
 - `src/lib/progress-backup.test.ts`
+- `src/data/concepts.test.ts` (knowledge graph and content-link integrity)
 - `src/lib/atlas-store.tsx`
 - `src/components/atlas/DataControls.tsx` and `src/components/atlas/DataControls.test.tsx`
 - `package-lock.json` (regenerated from the existing manifest; no dependency was intentionally added)
@@ -95,8 +96,8 @@ Files changed on the development branch:
 - `docs/ATLAS_INSTITUTIONAL.md`
 
 The workflow now reconciles the lockfile on development branches, commits that repair,
-then verifies a clean `npm ci` install. Run 45836566707 passed all four quality gates:
-88 tests, lint, TypeScript and production build. Ten existing Fast Refresh warnings remain;
+then verifies a clean `npm ci` install. Run 45837657513 passed all four quality gates:
+93 tests, lint, TypeScript and production build. Ten existing Fast Refresh warnings remain;
 there are no lint errors.
 
 ## Known security and architecture risks
